@@ -1,0 +1,2 @@
+# SZR
+Praca dyplomowa
