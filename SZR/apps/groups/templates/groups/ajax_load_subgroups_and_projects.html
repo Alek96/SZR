@@ -1,0 +1,32 @@
+{% load staticfiles %}
+
+<ul class="group-list-tree">
+    {% for group in group_list %}
+        <li>
+            <div class="list-group-item-2 list-group-item-subgroup" id="list-group-{{ group.id }}">
+                {#<i class="fa fa-angle-right"></i>#}
+                <a href="{% url 'groups:group_detail_index' group.id %}">
+                    <span>{{ group.name }}</span>
+                </a>
+            </div>
+            <div class="list-group-submenu" load-data-url="{% url 'groups:ajax_load_subgroups_and_projects' group.id %}">
+            </div>
+        </li>
+        <script type="text/javascript">
+            jQuery(function ($) {
+                $("#list-group-{{ group.id }}").click(function () {
+                    listGroupDropdown($(this))
+                });
+            });
+        </script>
+    {% endfor %}
+    {% for project in project_list %}
+        <li>
+            <div class="list-group-item-2 list-group-item-project">
+                <a href="#">
+                    <span>{{ project.name }}</span>
+                </a>
+            </div>
+        </li>
+    {% endfor %}
+</ul>

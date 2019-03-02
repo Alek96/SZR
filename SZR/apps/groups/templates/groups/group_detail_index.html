@@ -1,0 +1,42 @@
+{% extends 'groups/sidebar.html' %}
+{% load staticfiles %}
+
+{% block title %}Groups{% endblock %}
+{% block group_active %}active{% endblock %}
+
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/groups_detail_index.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/group_list.css' %}"/>
+{% endblock %}
+
+{% block sidebar-title %}
+    {{ group.name }}
+{% endblock %}
+
+{% block sidebar-menu %}
+    {{ block.super }}
+{% endblock %}
+
+{% block page-content-body %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>{{ group.name }}</h1>
+            </div>
+            <div class="col">
+                <div class="row buttons-new float-right">
+                    <div class="button-new-project">
+                        <a href="#" class="badge badge-success">New Project</a>
+                    </div>
+                    <div class="button-new-group">
+                        <a href="{% url 'groups:new_group' %}" class="badge badge-success">New Group</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% include 'groups/group_list.html' with group_list=group.subgroups.list project_list=group.projects.list %}
+{% endblock %}
+

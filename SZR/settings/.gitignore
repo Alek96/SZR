@@ -1,0 +1,4 @@
+# specific .gitignore for this directory
+
+# ignore secret keys and urls for external sites
+my_social_keys.py

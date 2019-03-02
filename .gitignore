@@ -40,6 +40,7 @@ htmlcov/
 .tox/
 .coverage
 .coverage.*
+coverage_html
 .cache
 nosetests.xml
 coverage.xml
@@ -77,6 +78,7 @@ target/
 
 # celery beat schedule file
 celerybeat-schedule
+celerybeat.pid
 
 # SageMath parsed files
 *.sage.py
@@ -102,3 +104,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Temporary notes
+*.todo
+
+# PyCharm files
+.idea/

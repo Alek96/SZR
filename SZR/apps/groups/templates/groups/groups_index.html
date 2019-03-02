@@ -1,0 +1,30 @@
+{% extends 'core/navbar.html' %}
+{% load staticfiles %}
+
+{% block title %}Groups Index{% endblock %}
+{% block group_active %}active{% endblock %}
+
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/groups_index.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/group_list.css' %}"/>
+{% endblock %}
+
+
+{% block body %}
+    <div class="group-body">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <h1>Groups</h1>
+                </div>
+                <div class="col">
+                    <div class="button-new-group">
+                        <a href="{% url 'groups:new_group' %}" class="badge badge-success">New Group</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% include 'groups/group_list.html' with group_list=group_list %}
+    </div>
+{% endblock %}

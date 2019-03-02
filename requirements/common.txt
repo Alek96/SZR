@@ -1,0 +1,35 @@
+# **Django** is a high-level Python Web framework
+# See https://www.djangoproject.com/
+Django
+
+# **Python Social Auth** is a high-level Python Web framework
+# See https://python-social-auth.readthedocs.io/en/latest/index.html
+social-auth-app-django
+
+# **Requests: HTTP for Humans**
+# Using by Python GitLab
+# See http://docs.python-requests.org/en/latest/
+requests
+
+# **Six** provides simple utilities for wrapping over differences between Python 2 and Python 3.
+# Using by Python GitLab
+# See https://pythonhosted.org/six/
+six
+
+# **Python GitLab** is a Python package providing access to the GitLab server API.
+# See https://github.com/python-gitlab/python-gitlab
+python-gitlab
+
+# **django-model-utils** is django model mixins and utilities
+# See...
+django-model-utils
+
+# **Celery** is an asynchronous task queue/job queue based on distributed message passing.
+# See http://www.celeryproject.org/
+celery
+
+# **django-celery-results** extension provides result backends using either the Django ORM, or the Django Cache framework.
+# See https://django-celery-results.readthedocs.io/en/latest/
+django-celery-results
+
+sqlalchemy

@@ -1,0 +1,9 @@
+
+.group-body {
+    padding-top: 3em;
+}
+
+.group-body .button-new-group {
+    font-size: 24px;
+    text-align: right;
+}
