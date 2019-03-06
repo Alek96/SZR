@@ -31,5 +31,3 @@ celery
 # **django-celery-results** extension provides result backends using either the Django ORM, or the Django Cache framework.
 # See https://django-celery-results.readthedocs.io/en/latest/
 django-celery-results
-
-sqlalchemy

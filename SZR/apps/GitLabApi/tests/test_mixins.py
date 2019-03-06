@@ -90,6 +90,18 @@ class TestMixinMethods(unittest.TestCase):
         self.assertIsInstance(obj, FakeObject)
         self.assertEqual(mgr._rest_manager.args, ({'foo': 'bar'},))
 
+    def test_create_mixin_err(self):
+        class M(CreateMixin, FakeManager):
+            pass
+
+        class FakeCreate(FakeGitlab):
+            def create(self, *args, **kwargs):
+                raise gl_exceptions.GitlabCreateError('error')
+
+        with self.assertRaises(GitlabCreateError) as error:
+            M(FakeCreate()).create({})
+        self.assertIn('error', str(error.exception))
+
     def test_update_mixin(self):
         class M(UpdateMixin, FakeManager):
             pass

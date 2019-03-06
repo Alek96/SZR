@@ -1,21 +1,25 @@
+from django.conf import settings
+
 from httmock import HTTMock
 from httmock import response
 from httmock import urlmatch
+from httmock import all_requests
 
 import functools
 
 from GitLabApi import GitLabContent
+from GitLabApi import exceptions
 
 
 class MockUrlBase:
     _path = ''
     _path_prefix = '/api/v4/'
-    _scheme = "http"
-    _netloc = "localhost"
+    _scheme = settings.SOCIAL_AUTH_GITLAB_API_URL[:settings.SOCIAL_AUTH_GITLAB_API_URL.index('://')]
+    _netloc = settings.SOCIAL_AUTH_GITLAB_API_URL[settings.SOCIAL_AUTH_GITLAB_API_URL.index('//') + 2:]
 
-    def request_check(self, request, **kwargs):
-        # print(request.url)
-        pass
+    def request_check(self, request, raise_error=None, **kwargs):
+        if raise_error:
+            raise raise_error
 
     def get_base_mock_url(self, method, path, content, **kwargs):
         path = r'^{}{}$'.format(self._path_prefix, path)
@@ -187,19 +191,29 @@ class MockGroupsUrls(MockUrlCRUD):
         return res
 
 
+@all_requests
+def mock_all_urls(url, request):
+    raise exceptions.NoMockedUrlError("Url '{}' is not mocked".format(url))
+
+
 class MockGitLabUrl(MockUrlBase):
     _mock_groups_url = MockGroupsUrls()
 
     def get_all_mock_urls(self, **kwargs):
         res = super().get_all_mock_urls(**kwargs)
         res.extend(self._mock_groups_url.get_all_mock_urls(**kwargs))
+
+        res.append(mock_all_urls)
         return res
 
 
-def mock_all_gitlab_url(func):
+def mock_all_gitlab_url(func=None, raise_error=None):
+    if func is None:
+        return functools.partial(mock_all_gitlab_url, raise_error=raise_error)
+
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        with HTTMock(*MockGitLabUrl().get_all_mock_urls()):
+    def wrapped_f(*args, **kwargs):
+        with HTTMock(*MockGitLabUrl().get_all_mock_urls(raise_error=raise_error)):
             return func(*args, **kwargs)
 
-    return wrapper
+    return wrapped_f

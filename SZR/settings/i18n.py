@@ -9,8 +9,8 @@ from .common import PROJECT_ROOT, MIDDLEWARE
 
 # ##### INTERNATIONALIZATION ##############################
 
-LANGUAGE_CODE = 'pl'
-TIME_ZONE = 'Europe/Polish'
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
 
 # Internationalization
 USE_I18N = True

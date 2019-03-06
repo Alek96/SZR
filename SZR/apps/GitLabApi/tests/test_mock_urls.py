@@ -3,6 +3,7 @@ from unittest import mock
 from django.test import TestCase
 
 from GitLabApi.MockUrls import *
+from GitLabApi.exceptions import *
 
 import requests
 import json
@@ -181,8 +182,13 @@ class TestMockGroupsUrls(MockUrlsTestsCases.TestCRUD, MockGroupsUrls):
         self._test_mock_group_obj_urls._test_get_all_mock_urls()
 
 
-class TestMockGitLabUrl(MockGitLabUrl):
+class TestMockGitLabUrl(unittest.TestCase, MockGitLabUrl):
     _test_mock_groups_url = TestMockGroupsUrls()
+
+    def test_external_url_raise_error(self):
+        with self.assertRaises(NoMockedUrlError):
+            with HTTMock(*self.get_all_mock_urls()):
+                requests.get("http://cos")
 
     def _test_get_all_mock_urls(self):
         self._test_mock_groups_url._test_get_all_mock_urls()
@@ -194,5 +200,24 @@ class TestMockAllGitlabUrl(unittest.TestCase):
         @mock_all_gitlab_url
         def all_urls():
             TestMockGitLabUrl()._test_get_all_mock_urls()
+            return "ok"
 
-        all_urls()
+        self.assertEqual(all_urls(), "ok")
+
+    def test_mock_all_gitlab_url_parenthesis(self):
+        @mock_all_gitlab_url()
+        def all_urls():
+            TestMockGitLabUrl()._test_get_all_mock_urls()
+            return "ok"
+
+        self.assertEqual(all_urls(), "ok")
+
+    def test_mock_all_gitlab_url_raise_error(self):
+        error = RuntimeError("error")
+
+        @mock_all_gitlab_url(raise_error=error)
+        def all_urls():
+            TestMockGitLabUrl()._test_get_all_mock_urls()
+
+        with self.assertRaises(RuntimeError):
+            self.assertEqual(all_urls(), "ok")

@@ -1,4 +1,7 @@
+from gitlab import exceptions as gl_exceptions
+
 from .base import *
+from .exceptions import *
 
 
 class GetMixin(RESTManager):
@@ -14,6 +17,7 @@ class ListMixin(RESTManager):
 
 class CreateMixin(RESTManager):
 
+    @on_error(gl_exceptions.GitlabCreateError, GitlabCreateError)
     def create(self, data, **kwargs):
         return self._obj_cls(self._rest_manager.create(data, **kwargs))
 

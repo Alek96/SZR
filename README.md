@@ -6,14 +6,14 @@
 ## Installation  
 It's recommended to use virtual environment.  
 
-Installation virtualenv
+Installation virtualenv for Python 3
 ```
-pip install virtualenv
+sudo apt-get install python3-venv
 ```
 
 create new virtual environment  
 ```
-virtualenv ./tmp/venv
+python3 -m venv ./tmp/venv
 ```  
 active it  
 ```

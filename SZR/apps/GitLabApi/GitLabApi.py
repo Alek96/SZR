@@ -1,6 +1,6 @@
-from django.conf import settings
 import gitlab
 from authentication.models import GitlabUser
+from django.conf import settings
 
 from .objects import *
 

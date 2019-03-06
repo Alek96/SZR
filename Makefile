@@ -101,6 +101,7 @@ migrate: ensure_virtual_env
 
 # sets up the environment by installing required dependencies
 setup: ensure_virtual_env
+	@pip install pip --upgrade
 	@pip install -r requirements/common.txt
 
 # sets up the development environment by installing required dependencies,

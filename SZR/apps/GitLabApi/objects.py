@@ -55,8 +55,6 @@ class GroupMemberManager(CRUDMixin):
 
 
 class Group(ObjectSaveMixin, ObjectDeleteMixin):
-    pass
-
     def __init__(self, rest_object):
         super().__init__(rest_object)
         self.__dict__.update({
