@@ -6,7 +6,7 @@
 [program:szr_celerybeat]
 
 ; Set full path to celery program if using virtualenv
-command=/path/to/project/SZR/tmp/venv/bin/celery worker -A SZR --loglevel=INFO
+command=/path/to/project/SZR/tmp/venv/bin/celery beat -A SZR --loglevel=INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 ; The directory to your Django project
 directory=/path/to/project/SZR

@@ -3,10 +3,10 @@
 [django-project-skeleton](https://github.com/Mischback/django-project-skeleton)  
 
 
-## Installation  
+## Installation For Linux
 It's recommended to use virtual environment.  
 
-Installation virtualenv for Python 3
+Installation virtualenv for Python 3.6
 ```
 sudo apt-get install python3-venv
 ```
@@ -51,7 +51,7 @@ Open file **SZR/settings/my_social_keys.py** and set **CELERY_BROKER_URL** to po
 ##### Manually  
 ```
 celery worker -A SZR -l info
-celerybeat -A SZR -l info 
+celery beat -A SZR -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 ##### With Supervisor  
 Installation
@@ -90,3 +90,20 @@ In **Redirect URI** write url to authorisation url in your application for examp
 Check **Trusted**, **api** and **read_user**.  
 Next open file SZR/settings/my_social_keys.py and copy **Application ID** to SOCIAL_AUTH_GITLAB_KEY, 
 **Secret** to SOCIAL_AUTH_GITLAB_SECRET and set SOCIAL_AUTH_GITLAB_API_URL to point your gitlab url.
+
+
+
+## TODO
+* Ikonka ładowania po naciśnięciu na grupę  
+* Po wciśnięciu zakładki w sidemenu i zaladowaniu nowej strony zakładka powinna być w ten sam sposób rozwinięta
+* Nowa strone dla add Member
+  * Form dla membersów (uprawnienia student=guest)
+  * Różne opcjie 
+  * Jeden Uczestnik
+  * import CSV
+* Tasks
+  * zaplanować ich obsługe - tworzyć nowy task dla kazdego zadania i wykonać go raz, zrobić uniwersalny task 
+  odpalany co XX i sprawdzajacy czy nie zrobic swojego zadania
+  * Detail - wyświetlenie wszystkich tasków
+  * add task - dodanie nowego
+    * stworzenie forms dla tasków

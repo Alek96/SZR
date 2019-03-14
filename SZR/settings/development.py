@@ -7,7 +7,6 @@ from .common import *
 # uncomment the following line to include i18n
 from .i18n import *
 
-
 # ##### DEBUG CONFIGURATION ###############################
 DEBUG = True
 
@@ -35,3 +34,6 @@ SOCIAL_AUTH_GITLAB_SCOPE = ['api']
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+
+# FRONTEND DEVELOPMENT DEFAULT VALUES
+MOCK_ALL_GITLAB_URL = False

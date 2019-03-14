@@ -1,5 +1,5 @@
 from django.test import TestCase
-from unittest import TestCase as unittest_TestCase
+import unittest
 from unittest import mock
 from django.conf import settings
 from django.db.models import ProtectedError
@@ -37,7 +37,7 @@ class GitlabUserModelMethod:
         return auth_user, social_auth
 
 
-class GitlabUserModelUnitTests(unittest_TestCase, GitlabUserModelMethod):
+class GitlabUserModelUnitTests(unittest.TestCase, GitlabUserModelMethod):
     def test_representation(self):
         user = self.create_gitlab_user(save=False)
         self.assertEqual(repr(user), "<User: {}>".format(user.id))

@@ -47,6 +47,7 @@ DEFAULT_APPS = [
     'core.apps.CoreConfig',
     'authentication.apps.AuthenticationConfig',
     'groups.apps.GitlabWrapperConfig',
+    'tasks.apps.TasksConfig',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -57,6 +58,7 @@ DEFAULT_APPS = [
     'django.contrib.sites',
     'social_django',
     'django_celery_results',
+    'django_celery_beat',
 ]
 
 # Middlewares
