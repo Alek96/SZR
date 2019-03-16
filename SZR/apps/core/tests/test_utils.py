@@ -1,7 +1,7 @@
 import unittest
 from django.test import TestCase
 
-from authentication.models import GitlabUser
+from core.models import GitlabUser
 from core.utils import *
 
 

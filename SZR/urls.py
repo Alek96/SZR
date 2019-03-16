@@ -6,6 +6,5 @@ urlpatterns = [
 
     path('auth/', include('social_django.urls', namespace='social')),
     path('core/', include('core.urls')),
-    path('authentication/', include('authentication.urls')),
     path('groups/', include('groups.urls')),
 ]

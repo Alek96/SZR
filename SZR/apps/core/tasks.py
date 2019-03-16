@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task, Task
 
 from SZR.celery import app as celery_app
-from tasks.models import *
+from core.models import *
 
 
 class BaseTask(Task):

@@ -5,8 +5,8 @@ from django.conf import settings
 
 from GitLabApi import *
 from GitLabApi.MockUrls import *
-from authentication.tests.test_models import GitlabUserModelMethod
-from authentication.models import GitlabUser
+from core.tests.test_models import GitlabUserModelMethod
+from core.models import GitlabUser
 
 import gitlab
 import json

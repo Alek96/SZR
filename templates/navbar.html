@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
           integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
 
-    <link rel="stylesheet" type="text/css" href="{% static 'core/stylesheets/navbar.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'core/../static/stylesheets/navbar.css' %}"/>
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -91,14 +91,14 @@
                     {% endif %}
 
                     <li class="nav-item {% block logout_active %}{% endblock %}">
-                        <a class="nav-link" href="{% url 'authentication:logout' %}">
+                        <a class="nav-link" href="{% url 'core:logout' %}">
                             <i class="fa fa-power-off"></i>
                             Log out
                         </a>
                     </li>
                 {% else %}
                     <li class="nav-item {% block login_active %}{% endblock %}">
-                        <a class="nav-link" href="{% url 'authentication:login' %}">
+                        <a class="nav-link" href="{% url 'core:login' %}">
                             <i class="fa fa-power-off"></i>
                             Log in
                         </a>

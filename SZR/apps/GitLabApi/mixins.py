@@ -1,7 +1,7 @@
 from gitlab import exceptions as gl_exceptions
 
-from .base import *
-from .exceptions import *
+from GitLabApi.base import *
+from GitLabApi.exceptions import *
 
 
 class GetMixin(RESTManager):

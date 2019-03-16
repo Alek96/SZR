@@ -1,8 +1,8 @@
 import unittest
 from django.test import TestCase
 
-from authentication.models import GitlabUser
-from .test_models import GitlabUserModelMethod
+from core.models import GitlabUser
+from core.tests.test_models import GitlabUserModelMethod
 
 
 class GitlabUserSignalsTests(TestCase, GitlabUserModelMethod):

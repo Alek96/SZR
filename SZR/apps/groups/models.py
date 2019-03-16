@@ -4,8 +4,8 @@ from django.core.exceptions import ValidationError
 from model_utils import FieldTracker
 
 from core.models import AbstractGitlabModel
-from authentication.models import GitlabUser
-from tasks.models import AbstractTaskGroup, AbstractTask
+from core.models import GitlabUser
+from core.models import AbstractTaskGroup, AbstractTask
 
 
 class GitlabGroup(AbstractGitlabModel):

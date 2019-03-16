@@ -1,4 +1,4 @@
-{% extends 'core/navbar.html' %}
+{% extends 'navbar.html' %}
 {% load staticfiles %}
 
 {% block title %}sidebar{% endblock %}
@@ -6,7 +6,7 @@
 
 {% block head %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'core/stylesheets/sidebar.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'stylesheets/sidebar.css' %}"/>
 {% endblock %}
 
 
@@ -122,7 +122,7 @@
         <!-- page-content" -->
     </div>
     <!-- page-wrapper -->
-    <script src="{% static 'core/javascripts/sidebar.js' %}"></script>
+    <script src="{% static 'core/../static/javascripts/sidebar.js' %}"></script>
 {% endblock %}
 
 

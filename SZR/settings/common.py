@@ -42,13 +42,8 @@ sys.path.append(normpath(join(PROJECT_ROOT, 'SZR/apps')))
 
 # ##### APPLICATION CONFIGURATION #########################
 
-# these are the apps
-DEFAULT_APPS = [
-    'core.apps.CoreConfig',
-    'authentication.apps.AuthenticationConfig',
-    'groups.apps.GitlabWrapperConfig',
-    'tasks.apps.TasksConfig',
-
+# Apps
+PREREQUISITE_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,6 +55,13 @@ DEFAULT_APPS = [
     'django_celery_results',
     'django_celery_beat',
 ]
+
+PROJECT_APPS = [
+    'core.apps.CoreConfig',
+    'groups.apps.GitlabWrapperConfig',
+]
+
+DEFAULT_APPS = PREREQUISITE_APPS + PROJECT_APPS
 
 # Middlewares
 MIDDLEWARE = [
@@ -134,9 +136,9 @@ DEBUG = False
 SECRET_KEY = SecretKeyGenerator(SECRET_FILE).get_or_create()
 
 # adjust the minimal login
-LOGIN_URL = 'authentication:login'
+LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = 'authentication:login'
+LOGOUT_REDIRECT_URL = 'core:login'
 
 # CELERY STUFF
 CELERY_RESULT_BACKEND = 'django-db'

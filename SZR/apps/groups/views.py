@@ -10,7 +10,7 @@ from django.conf import settings
 
 from GitLabApi import *
 from GitLabApi.exceptions import *
-from . import forms
+from groups import forms
 
 from GitLabApi import mock_all_gitlab_url
 

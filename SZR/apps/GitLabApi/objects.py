@@ -1,5 +1,4 @@
-# from .base import *
-from .mixins import *
+from GitLabApi.mixins import *
 
 from gitlab import base
 

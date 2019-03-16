@@ -4,7 +4,6 @@ from django.urls import reverse, resolve
 from django.conf import settings
 from django.contrib.auth.models import User
 from social_django.models import UserSocialAuth
-
 import functools
 
 
@@ -109,52 +108,73 @@ class SimpleUrlsTestsCases:
             self.assertContains(response, reverse(settings.LOGIN_URL))
 
 
-# class AdminPageTest(SimpleUrlsTestsCases.SimpleUrlsTests):
-#     pattern = '/admin/'
-#     app_name = 'admin'
-#     name = 'index'
-#     login_required = False
-
-
-class CoreAppNameCase:
-    class CoreAppNameTest(SimpleUrlsTestsCases.SimpleUrlsTests):
+class RegistrationAppNameCase:
+    class RegistrationAppNameTest(SimpleUrlsTestsCases.SimpleUrlsTests):
         app_name = 'core'
+        login_name = 'login'
+        logout_name = 'logout'
         login_required = False
 
+        def get_login_view_name(self):
+            return '{}:{}'.format(self.app_name, self.login_name)
 
-class InitNavbarPageTest(CoreAppNameCase.CoreAppNameTest):
-    name = 'init_navbar'
+        def get_logout_view_name(self):
+            return '{}:{}'.format(self.app_name, self.logout_name)
 
-    def test_page_found(self):
+        def get_login_url(self):
+            return reverse(self.get_login_view_name())
+
+        def get_logout_url(self):
+            return reverse(self.get_logout_view_name())
+
+
+class LoginPageTest(RegistrationAppNameCase.RegistrationAppNameTest):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.name = cls.login_name
+        super().setUpTestData()
+
+    def test_simple_get_page(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'core/init_navbar.html')
+
+    # todo: Erase comment after providing home page ('/')
+    def test_login(self):
+        self.create_user_to_login()
+        response = self.client.post(self.get_login_url(), self.get_user_credentials(), follow=True)
+
+        # self.assertEqual(response.status_code, 200)
+        # self.assertRedirects(response, '/')
+        # self.assertTrue(response.context['user'].is_authenticated)
+        self.assertIn('_auth_user_id', self.client.session)
 
 
-class InitNavbarArgumentsPageTest(CoreAppNameCase.CoreAppNameTest):
-    name = 'init_navbar_arguments'
-    args = {'arg': '1'}
+class LoginGitlabPageTest(RegistrationAppNameCase.RegistrationAppNameTest):
+    name = 'login_gitlab'
 
-    def test_page_found(self):
+    def test_simple_get_page(self):
         response = self.client.get(self.get_url())
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'core/init_navbar.html')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('social:begin', args=('gitlab',)))
 
 
-class InitSidebarPageTest(CoreAppNameCase.CoreAppNameTest):
-    name = 'init_sidebar'
+class LogoutPageTest(RegistrationAppNameCase.RegistrationAppNameTest):
 
-    def test_page_found(self):
+    @classmethod
+    def setUpTestData(cls):
+        cls.name = cls.logout_name
+        super().setUpTestData()
+
+    def test_simple_get_page(self):
         response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, self.get_login_url())
+
+    @LoginMethods.login_wrapper
+    def test_logout(self):
+        self.assertIn('_auth_user_id', self.client.session)
+        response = self.client.post(self.get_logout_url(), follow=True)
+        self.assertNotIn('_auth_user_id', self.client.session)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'core/init_sidebar.html')
-
-
-class InitSidebarArgumentsPageTest(CoreAppNameCase.CoreAppNameTest):
-    name = 'init_sidebar_arguments'
-    args = {'arg': '1'}
-
-    def test_page_found(self):
-        response = self.client.get(self.get_url())
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'core/init_sidebar.html')
+        self.assertRedirects(response, self.get_login_url())
