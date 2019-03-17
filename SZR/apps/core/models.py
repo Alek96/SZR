@@ -8,6 +8,7 @@ from django.contrib.auth.models import User as Auth_user
 from social_django.models import UserSocialAuth
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from model_utils import FieldTracker
+import json
 
 
 class AbstractGitlabModel(models.Model):
@@ -84,6 +85,7 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
         super().save(update_fields=['status'])
         if self.tracker.has_changed('execute_date'):
             self._update_tasks_execute_dates()
+        self.refresh_from_db()
 
     def _update_tasks_execute_dates(self):
         for task in self.tasks_set.all():
@@ -136,6 +138,12 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
 
     def save(self, *args, **kwargs):
         self.full_clean()
+
+        if self.pk is None:
+            self.task_group.increment_task_number()
+            self.task_group.save()
+            self.execute_date = self.task_group.execute_date
+
         super().save(*args, **kwargs)
 
         if not self.celery_task and self.status == self.CREATED:
@@ -151,7 +159,7 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
             interval=self._create_or_get_interval(),
             name='task-{}-{}'.format(self.__class__.__name__, self.id),
             task=self._get_task_path(),
-            kwargs={'id': self.id},
+            kwargs=json.dumps({'task_id': self.id}),
             one_off=True,
             start_time=self.execute_date
         )

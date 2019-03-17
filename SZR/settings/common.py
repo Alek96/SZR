@@ -1,5 +1,5 @@
 # Python imports
-from .secret_key_generator import SecretKeyGenerator
+from .utils import SecretKeyGenerator
 from os.path import abspath, basename, dirname, join, normpath
 import sys
 
@@ -58,7 +58,7 @@ PREREQUISITE_APPS = [
 
 PROJECT_APPS = [
     'core.apps.CoreConfig',
-    'groups.apps.GitlabWrapperConfig',
+    'groups.apps.GroupsConfig',
 ]
 
 DEFAULT_APPS = PREREQUISITE_APPS + PROJECT_APPS
@@ -129,9 +129,6 @@ STATIC_URL = '/static/'
 # the URL for media files
 MEDIA_URL = '/media/'
 
-# ##### DEBUG CONFIGURATION ###############################
-DEBUG = False
-
 # finally grab the SECRET KEY
 SECRET_KEY = SecretKeyGenerator(SECRET_FILE).get_or_create()
 
@@ -140,9 +137,14 @@ LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'core:login'
 
-# CELERY STUFF
+# ##### CELERY CONFIGURATION ###############################
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-TEST_RUNNER = "SZR.tests.test_runner.CeleryTestSuiteRunner"
+
+# ##### DEBUG CONFIGURATION ###############################
+DEBUG = False
+
+# Run Celery synchronously
+TEST_RUNNER = "SZR.settings.utils.CeleryTestSuiteRunner"

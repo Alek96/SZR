@@ -29,4 +29,4 @@ class AddGroupMemberTask(AbstractTask):
     tracker = FieldTracker()  # We need specified this field every time after inheritance
 
     def _get_task_path(self):
-        return 'tasks.tasks.test_task_func'
+        return 'groups.tasks.AddGroupMemberTask'

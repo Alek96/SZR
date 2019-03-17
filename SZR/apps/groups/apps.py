@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 
 
-class GitlabWrapperConfig(AppConfig):
+class GroupsConfig(AppConfig):
     name = 'groups'
 
     def ready(self):

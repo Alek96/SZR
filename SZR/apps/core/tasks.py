@@ -1,8 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task, Task
-
-from SZR.celery import app as celery_app
-from core.models import *
+from django.conf import settings
+from django.utils import timezone
 
 
 class BaseTask(Task):
@@ -12,32 +11,33 @@ class BaseTask(Task):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._task = None
-        self._status = None
+        self.name = '{0}.{1}'.format(self.__module__, self.__name__)
 
-    def __del__(self):
+    def run(self, task_id, **kwargs):
+        self._set_up(task_id)
+        self._set_up_run()
+        self._run(**kwargs)
         self._finnish()
 
-    def run(self, id, **kwargs):
-        self._set_up(id)
-        self._set_up_run()
+    def _run(self, **kwargs):
+        raise NotImplementedError('Task must define the _run method.')
 
-    def _set_up(self, id):
-        self._task = self._get_object_from_db(id)
+    def _set_up(self, task_id):
+        self._task = self._get_object_from_db(task_id)
 
-    def _get_object_from_db(self, id):
-        return self._task_model.objects.get(id=id)
+    def _get_object_from_db(self, task_id):
+        return self._task_model.objects.get(id=task_id)
 
     def _set_up_run(self):
+        self._task.celery_task.delete()
+        self._task.celery_task = None
         self._task.status = self._task.RUNNING
-        if self._task.celery_task:
-            self._task.celery_task.delete()
         self._task.save()
 
     def _finnish(self):
-        if self._task:
-            self._task.status = self._status
-            self._task.save()
+        self._task.status = self._status
+        self._task.finished_date = timezone.now()
+        self._task.save()
 
-
-celery_app.register_task(BaseTask())
+        self._task.task_group.increment_finished_tasks_number(self._status)
+        self._task.task_group.save()

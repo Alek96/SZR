@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from groups.models import *
-from core.tests.test_models import AbstractTaskGroupTestCase, AbstractTaskTestCase
+from core.tests.test_models import AbstractTaskGroupAndTaskMethods, AbstractTaskGroupTestCase, AbstractTaskTestCase
 
 
 class GitlabGroupModelUnitTests(TestCase):
@@ -14,16 +14,13 @@ class GitlabGroupModelUnitTests(TestCase):
         self.assertEqual(str(group), "<Group: {}>".format(group.id))
 
 
-class AddGroupMemberTaskGroupTests(AbstractTaskGroupTestCase.AbstractTaskGroupTests):
-    def create_group_task(self, **kwargs):
-        return AddGroupMemberTaskGroup.objects.create(**kwargs)
-
-
-class AddGroupMemberTaskTests(AbstractTaskTestCase.AbstractTaskTests):
-    def setUp(self):
-        super().setUp()
-        self.task_group = AddGroupMemberTaskGroup.objects.create()
+class AddGroupMemberTaskGroupAndTaskMethods(AbstractTaskGroupAndTaskMethods):
+    def __init__(self):
+        super().__init__()
         self.gitlab_group = GitlabGroup.objects.create()
+
+    def create_task_group(self, **kwargs):
+        return AddGroupMemberTaskGroup.objects.create(**kwargs)
 
     def create_task(self, username="name", **kwargs):
         return AddGroupMemberTask.objects.create(
@@ -33,3 +30,11 @@ class AddGroupMemberTaskTests(AbstractTaskTestCase.AbstractTaskTests):
             gitlab_group=self.gitlab_group,
             **kwargs
         )
+
+
+class AddGroupMemberTaskGroupTests(AbstractTaskGroupTestCase.AbstractTaskGroupTests):
+    _task_group_and_task_methods_class = AddGroupMemberTaskGroupAndTaskMethods
+
+
+class AddGroupMemberTaskTests(AbstractTaskTestCase.AbstractTaskTests):
+    _task_group_and_task_methods_class = AddGroupMemberTaskGroupAndTaskMethods
