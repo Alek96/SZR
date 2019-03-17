@@ -17,3 +17,7 @@ flake8
 # **httmock** is a mocking library for requests for Python 2.7 and 3.4+
 # See https://github.com/patrys/httmock
 httmock
+
+# **freezegun** is a library that allows your Python tests to travel through time by mocking the datetime module.
+# See https://github.com/spulec/freezegun
+freezegun

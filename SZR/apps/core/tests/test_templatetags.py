@@ -11,4 +11,4 @@ class AddStrTemplateTagTest(SimpleTestCase):
             '{{ str|add_str:"-"|add_str:str }}'
         )
         rendered_template = templte_to_render.render(context)
-        self.assertInHTML(str + '-' + str, rendered_template)
+        self.assertInHTML('{}-{}'.format(str, str), rendered_template)

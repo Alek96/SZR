@@ -31,3 +31,12 @@ celery
 # **django-celery-results** extension provides result backends using either the Django ORM, or the Django Cache framework.
 # See https://django-celery-results.readthedocs.io/en/latest/
 django-celery-results
+
+
+# **django_celery_beat** extension enables you to store the periodic task schedule in the database.
+# See https://django-celery-beat.readthedocs.io/en/latest/
+django_celery_beat
+
+# **django-model-utils** Django model mixins and utilities.
+# See https://django-model-utils.readthedocs.io/en/latest/index.html
+django-model-utils

@@ -1,4 +1,4 @@
-{% extends 'core/navbar.html' %}
+{% extends 'navbar.html' %}
 {% load staticfiles %}
 
 {% block title %}Log In{% endblock %}
@@ -6,7 +6,7 @@
 
 
 {% block head %}
-    <link rel="stylesheet" type="text/css" href="{% static 'authentication/stylesheets/login.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'core/stylesheets/login.css' %}"/>
     {% block page-content-head %}{% endblock %}
 {% endblock %}
 
@@ -28,7 +28,7 @@
                                         <p><strong>{{ error_message }}</strong></p>
                                     </div>
                                 {% endif %}
-                                <form id="login-form" action="{% url 'authentication:login' %}" method="post"
+                                <form id="login-form" action="{% url 'core:login' %}" method="post"
                                       role="form" style="display: block;" enctype="multipart/form-data">
                                     {% csrf_token %}
                                     <div class="form-group">

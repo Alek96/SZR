@@ -1,8 +1,8 @@
 import gitlab
-from authentication.models import GitlabUser
+from core.models import GitlabUser
 from django.conf import settings
 
-from .objects import *
+from GitLabApi.objects import *
 
 
 class GitLabApi:

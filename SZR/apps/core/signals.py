@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User as Auth_user
 from social_django.models import UserSocialAuth
 
-from .models import GitlabUser
+from core.models import GitlabUser
 
 
 @receiver(post_save, sender=UserSocialAuth)

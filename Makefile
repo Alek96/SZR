@@ -8,6 +8,7 @@ DJANGO_TEST_POSTFIX := --settings=$(DJANGO_TEST_SETTINGS) --pythonpath=$(PYTHONP
 
 DJANGO_SERVER_PORT := 1234
 
+
 .PHONY: all help run/dev clean coverage ensure_virtual_env flake8 flake lint \
 		test test/dev test/prod \
 		migrate setup setup/dev refresh refresh/dev refresh/prod update/dev
@@ -33,16 +34,35 @@ all:
 	@echo "                 necessary apps, running migrations and creating"
 	@echo "                 a superuser (django::django)"
 	@echo "  update/dev   Shortcut for setup and refresh"
-	@echo "  test         Runs tests"
+	@echo "  test [module_name=module_name]"
+	@echo "               Runs tests"
 	@echo "  test/dev     Runs tests with development settings"
 	@echo "  test/prod    Runs tests with production settings"
 
 # prints help message
 help: all
 
+
+# runs server
+run: ensure_virtual_env
+	@echo "Using setting file '$(DJANGO_TEST_SETTINGS_FILE)'..."
+	@echo ""
+	$(PYTHON_BIN)/django-admin.py runserver $(DJANGO_SERVER_PORT) $(DJANGO_TEST_POSTFIX)
+
+
+# Runs server with development settings
+run/prod: ensure_virtual_env
+	$(MAKE) run DJANGO_TEST_SETTINGS_FILE=production
+
 # Runs server with development settings
 run/dev: ensure_virtual_env
-	$(PYTHON_BIN)/django-admin.py runserver $(DJANGO_SERVER_PORT) $(DJANGO_TEST_POSTFIX)
+	$(MAKE) run DJANGO_TEST_SETTINGS_FILE=development
+
+
+# Runs server with frontend development settings
+run/frontend_dev: ensure_virtual_env
+	$(MAKE) run DJANGO_TEST_SETTINGS_FILE=frontend_dev
+
 
 # performs the tests and measures code coverage
 coverage: ensure_virtual_env test
@@ -80,7 +100,7 @@ lint: flake8
 test: ensure_virtual_env
 	@echo "Using setting file '$(DJANGO_TEST_SETTINGS_FILE)'..."
 	@echo ""
-	@$(PYTHON_BIN)/coverage run $(PYTHON_BIN)/django-admin.py test $(DJANGO_TEST_POSTFIX)
+	@$(PYTHON_BIN)/coverage run $(PYTHON_BIN)/django-admin.py test $(DJANGO_TEST_POSTFIX) --debug-mode ${module_name}
 
 # runs the tests with development settings
 test/dev:
@@ -131,3 +151,4 @@ update/dev: setup/dev refresh/dev
 
 restart_celery:
 	sudo supervisorctl restart szr_celery
+	sudo supervisorctl restart szr_celerybeat

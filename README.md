@@ -3,10 +3,10 @@
 [django-project-skeleton](https://github.com/Mischback/django-project-skeleton)  
 
 
-## Installation  
+## Installation For Linux
 It's recommended to use virtual environment.  
 
-Installation virtualenv for Python 3
+Installation virtualenv for Python 3.6
 ```
 sudo apt-get install python3-venv
 ```
@@ -51,7 +51,7 @@ Open file **SZR/settings/my_social_keys.py** and set **CELERY_BROKER_URL** to po
 ##### Manually  
 ```
 celery worker -A SZR -l info
-celerybeat -A SZR -l info 
+celery beat -A SZR -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 ##### With Supervisor  
 Installation
