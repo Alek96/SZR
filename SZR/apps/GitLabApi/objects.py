@@ -113,3 +113,60 @@ class UserManager(CRUDMixin):
                 raise GitlabGetError(error_message='Failed to get user {"username": ["Does not exist"]}')
             return user[0]
 
+
+class ProjectMember(ObjectSaveMixin, ObjectDeleteMixin):
+    pass
+
+
+class ProjectMemberManager(CRUDMixin):
+    _obj_cls = ProjectMember
+
+    def all(self, **kwargs):
+
+        """
+        gitlab.v4.objects.ProjectMemberManager.all() returns dict, so we need convert them to objects, like in list method
+        Code is copied from gitlab.mixins.ListMixin.list
+        """
+        obj = self._rest_manager.all(**kwargs)
+
+        if isinstance(obj, list):
+            obj_list = [self._rest_manager._obj_cls(self._rest_manager, item) for item in obj]
+        else:
+            obj_list = base.RESTObjectList(self._rest_manager, self._rest_manager._obj_cls, obj)
+
+        return [self._obj_cls(item) for item in obj_list]
+
+    def external(self, **kwargs):
+        internal = self.list()
+        all_members = self.all()
+
+        external = []
+        for member in all_members:
+            exist = False
+            for i in internal:
+                if member.id == i.id:
+                    exist = True
+                    break
+            if not exist:
+                external.append(member)
+
+        return external
+
+
+class Project(ObjectSaveMixin, ObjectDeleteMixin):
+    def __init__(self, rest_object):
+        super().__init__(rest_object)
+        self.__dict__.update({
+            'members': ProjectMemberManager(rest_object.members),
+        })
+
+    def save(self, **kwargs):
+        """
+        if visibility level is not specified, server will set it to public, overwriting current visibility level.
+        """
+        self.visibility = getattr(self, 'visibility')
+        super().save(**kwargs)
+
+
+class ProjectManager(CRUDMixin):
+    _obj_cls = Project

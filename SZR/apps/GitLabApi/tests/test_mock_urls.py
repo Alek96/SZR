@@ -212,8 +212,66 @@ class TestMockUsersUrls(MockUrlsTestsCases.TestCRUD, MockUsersUrls):
         self._test_mock_user_obj_urls._test_get_all_mock_urls()
 
 
+class TestMockProjectMemberObjUrls(MockUrlsTestsCases.TestSaveObj, MockUrlsTestsCases.TestDeleteObj,
+                                   MockProjectMemberObjUrls):
+
+    def _test_get_all_mock_urls(self):
+        self._test_save_obj()
+        self._test_delete_obj()
+
+
+class TestMockProjectMembersUrls(MockUrlsTestsCases.TestCRUD, MockProjectMembersUrls):
+    _test_mock_project_member_obj_urls = TestMockProjectMemberObjUrls()
+
+    def _test_all(self):
+        url = self.get_all_url()
+        resp = requests.get(url)
+        resp_dict = json.loads(str(resp.content, 'utf-8'))
+        self.assertEqual(resp_dict, self.get_all_content())
+
+    def test_all(self):
+        with HTTMock(self.get_mock_all_url()):
+            self._test_all()
+
+    def get_all_url(self):
+        return "{}{}/all".format(self.url_prefix, self._path).replace('[0-9]+', '98')
+
+    def _test_get_all_mock_urls(self):
+        self._test_list()
+        self._test_get()
+        self._test_create()
+        self._test_delete()
+        self._test_all()
+
+        self._test_mock_project_member_obj_urls._test_get_all_mock_urls()
+
+
+class TestMockProjectObjUrls(MockUrlsTestsCases.TestSaveObj, MockUrlsTestsCases.TestDeleteObj, MockProjectObjUrls):
+    _test_mock_project_members_url = TestMockProjectMembersUrls()
+
+    def _test_get_all_mock_urls(self):
+        self._test_save_obj()
+        self._test_delete_obj()
+
+        self._test_mock_project_members_url._test_get_all_mock_urls()
+
+
+class TestMockProjectsUrls(MockUrlsTestsCases.TestCRUD, MockProjectsUrls):
+    _test_mock_project_obj_urls = TestMockProjectObjUrls()
+
+    def _test_get_all_mock_urls(self):
+        self._test_list()
+        self._test_get()
+        self._test_create()
+        self._test_delete()
+
+        self._test_mock_project_obj_urls._test_get_all_mock_urls()
+
+
 class TestMockGitLabUrl(unittest.TestCase, MockGitLabUrl):
     _test_mock_groups_url = TestMockGroupsUrls()
+    _test_mock_users_url = TestMockUsersUrls()
+    _test_mock_projects_url = TestMockProjectsUrls()
 
     def test_external_url_raise_error(self):
         with self.assertRaises(NoMockedUrlError):
@@ -222,6 +280,8 @@ class TestMockGitLabUrl(unittest.TestCase, MockGitLabUrl):
 
     def _test_get_all_mock_urls(self):
         self._test_mock_groups_url._test_get_all_mock_urls()
+        self._test_mock_users_url._test_get_all_mock_urls()
+        self._test_mock_projects_url._test_get_all_mock_urls()
 
 
 class TestMockAllGitlabUrl(unittest.TestCase):

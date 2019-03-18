@@ -106,7 +106,7 @@ class MockGroupProjectsUrls(MockUrlList):
     _path = 'groups/[0-9]+/projects'
 
     def get_list_content(self):
-        return GitLabContent.get_project_list(namespace_id=1)
+        return GitLabContent.get_group_project_list(namespace_id=1)
 
     def get_all_mock_urls(self, **kwargs):
         res = super().get_all_mock_urls(**kwargs)
@@ -118,7 +118,7 @@ class MockGroupMemberObjUrls(MockUrlSave, MockUrlDelete):
     _path = 'groups/[0-9]+/members'
 
     def get_save_content(self):
-        return GitLabContent.get_member()
+        return GitLabContent.get_group_member()
 
     def get_all_mock_urls(self, **kwargs):
         res = super().get_all_mock_urls(**kwargs)
@@ -132,16 +132,16 @@ class MockGroupMembersUrls(MockUrlCRUD):
     _mock_group_members_obj_url = MockGroupMemberObjUrls()
 
     def get_get_content(self):
-        return GitLabContent.get_member()
+        return GitLabContent.get_group_member()
 
     def get_list_content(self):
-        return GitLabContent.get_member_list()
+        return GitLabContent.get_group_member_list()
 
     def get_all_content(self):
-        return GitLabContent.get_member_all()
+        return GitLabContent.get_group_member_all()
 
     def get_create_content(self):
-        return GitLabContent.get_member()
+        return GitLabContent.get_group_member()
 
     def get_mock_all_url(self, **kwargs):
         content = self.get_all_content()
@@ -242,6 +242,89 @@ class MockUsersUrls(MockUrlCRUD):
         return res
 
 
+class MockProjectMemberObjUrls(MockUrlSave, MockUrlDelete):
+    _path = 'projects/[0-9]+/members'
+
+    def get_save_content(self):
+        return GitLabContent.get_project_member()
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_save_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        return res
+
+
+class MockProjectMembersUrls(MockUrlCRUD):
+    _path = 'projects/[0-9]+/members'
+    _mock_project_members_obj_url = MockProjectMemberObjUrls()
+
+    def get_get_content(self):
+        return GitLabContent.get_project_member()
+
+    def get_list_content(self):
+        return GitLabContent.get_project_member_list()
+
+    def get_all_content(self):
+        return GitLabContent.get_project_member_all()
+
+    def get_create_content(self):
+        return GitLabContent.get_project_member()
+
+    def get_mock_all_url(self, **kwargs):
+        content = self.get_all_content()
+        path = '{}/all'.format(self._path)
+        return self.get_base_mock_url(method="get", path=path, content=content, **kwargs)
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_all_url(**kwargs))
+        res.append(self.get_mock_list_url(**kwargs))
+        res.append(self.get_mock_get_url(**kwargs))
+        res.append(self.get_mock_create_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        res.extend(self._mock_project_members_obj_url.get_all_mock_urls(**kwargs))
+        return res
+
+
+class MockProjectObjUrls(MockUrlSave, MockUrlDelete):
+    _path = 'projects'
+    _mock_project_members_url = MockProjectMembersUrls()
+
+    def get_save_content(self):
+        return GitLabContent.get_project()
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_save_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        res.extend(self._mock_project_members_url.get_all_mock_urls(**kwargs))
+        return res
+
+
+class MockProjectsUrls(MockUrlCRUD):
+    _path = 'projects'
+    _mock_project_obj_url = MockProjectObjUrls()
+
+    def get_get_content(self):
+        return GitLabContent.get_project()
+
+    def get_list_content(self):
+        return GitLabContent.get_project_list()
+
+    def get_create_content(self):
+        return GitLabContent.get_project()
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_list_url(**kwargs))
+        res.append(self.get_mock_get_url(**kwargs))
+        res.append(self.get_mock_create_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        res.extend(self._mock_project_obj_url.get_all_mock_urls(**kwargs))
+        return res
+
+
 @all_requests
 def mock_all_urls_and_raise_error(url, request):
     raise exceptions.NoMockedUrlError("Url '{}' is not mocked".format(url))
@@ -250,11 +333,13 @@ def mock_all_urls_and_raise_error(url, request):
 class MockGitLabUrl(MockUrlBase):
     _mock_groups_url = MockGroupsUrls()
     _mock_users_url = MockUsersUrls()
+    _mock_projects_url = MockProjectsUrls()
 
     def get_all_mock_urls(self, **kwargs):
         res = super().get_all_mock_urls(**kwargs)
         res.extend(self._mock_groups_url.get_all_mock_urls(**kwargs))
         res.extend(self._mock_users_url.get_all_mock_urls(**kwargs))
+        res.extend(self._mock_projects_url.get_all_mock_urls(**kwargs))
 
         res.append(mock_all_urls_and_raise_error)
         return res

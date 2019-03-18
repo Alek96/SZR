@@ -11,6 +11,7 @@ class GitLabApi:
 
         self.groups = GroupManager(self._gitlab.groups)
         self.users = UserManager(self._gitlab.users)
+        self.projects = ProjectManager(self._gitlab.projects)
 
     def _get_gitlab_connection(self, user_id):
         gitlab_user = GitlabUser.objects.get(user_id=user_id)

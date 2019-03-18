@@ -6,6 +6,7 @@ from django.conf import settings
 from GitLabApi import *
 from GitLabApi.MockUrls import *
 from GitLabApi.exceptions import *
+from GitLabApi.objects import *
 from core.tests.test_models import GitlabUserModelMethod
 from core.models import GitlabUser
 
@@ -178,7 +179,7 @@ class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
         self._gitlab_api_mgr = self._gitlab_groups.members
 
     def get_create_args(self):
-        return GitLabContent.get_new_member_args()
+        return GitLabContent.get_new_group_member_args()
 
     def _test_all(self, **kwargs):
         content = self.get_all_content()
@@ -257,3 +258,93 @@ class TestGitLabUserObjApi(GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.
     def test_save_obj(self):
         with self.assertRaises(NotImplementedError):
             super().test_save_obj()
+
+
+class TestGitLabProjectsApi(GitLabApiTestsCases.TestCRUD, MockProjectsUrls):
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self.gitlab_api.projects
+
+    def get_create_args(self):
+        return GitLabContent.get_new_project_args()
+
+
+class TestGitLabProjectChildren(GitLabApiTestsCases.TestBase):
+    _project_id = 1
+
+    def setUp(self):
+        super().setUp()
+        mock_get_url = MockProjectsUrls().get_mock_get_url()
+        with HTTMock(mock_get_url):
+            self._gitlab_project = self.gitlab_api.projects.get(self._project_id)
+
+
+class TestGitLabProjectObjApi(TestGitLabProjectChildren,
+                              GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockProjectObjUrls):
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self._gitlab_project
+
+    def test_save_obj(self, **kwargs):
+        super().test_save_obj(args={'visibility': self._gitlab_api_mgr.visibility})
+
+
+class TestGitLabProjectMembersApi(TestGitLabProjectChildren,
+                                  GitLabApiTestsCases.TestCRUD, MockProjectMembersUrls):
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self._gitlab_project.members
+
+    def get_create_args(self):
+        return GitLabContent.get_new_project_member_args()
+
+    def _test_all(self, **kwargs):
+        content = self.get_all_content()
+
+        with HTTMock(self.get_mock_all_url()):
+            project_list = self._gitlab_api_mgr.all(**kwargs)
+            self.assertGreater(len(project_list), 0)
+            for project_info, project in zip(content, project_list):
+                for key, value in project_info.items():
+                    self.assertEqual(getattr(project, key), value)
+
+    def test_all(self):
+        self._test_all()
+
+    def test_all_single_content_element(self):
+        self._test_all(as_list=False)
+
+    def test_external(self):
+        content_list = self.get_list_content()
+        content_all = self.get_all_content()
+
+        with HTTMock(self.get_mock_all_url(), self.get_mock_list_url()):
+            project_ext = self._gitlab_api_mgr.external()
+            self.assertGreater(len(project_ext), 0)
+            for project in project_ext:
+                for content in content_list:
+                    self.assertNotEqual(project.id, content['id'])
+
+
+class TestGitLabProjectMemberObjApi(TestGitLabProjectChildren,
+                                    GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
+                                    MockProjectMemberObjUrls):
+
+    def setUp(self):
+        super().setUp()
+        mock_get_url = MockProjectMembersUrls().get_mock_get_url()
+        with HTTMock(mock_get_url):
+            self._gitlab_api_mgr = self._gitlab_project.members.get(1)
+
+    def test_save_obj(self, **kwargs):
+        super().test_save_obj(args={'access_level': self._gitlab_api_mgr.access_level})
+
+
+class TestGitLabApi(GitLabApiTestsCases.TestBase):
+    def test_inheritance(self):
+        self.assertIsInstance(self.gitlab_api.groups, GroupManager)
+        self.assertIsInstance(self.gitlab_api.users, UserManager)
+        self.assertIsInstance(self.gitlab_api.projects, ProjectManager)

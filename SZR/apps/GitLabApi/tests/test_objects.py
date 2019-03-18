@@ -51,10 +51,6 @@ class GroupMemberManagerTests(unittest.TestCase):
         self.assertIsInstance(mgr, mixins.CRUDMixin)
         self.assertEqual(mgr._obj_cls, GroupMember)
 
-    # todo: Write this test
-    def test_all(self):
-        pass
-
 
 class GroupTests(unittest.TestCase):
     def test_inheritance(self):
@@ -70,3 +66,29 @@ class GroupManagerTests(unittest.TestCase):
         mgr = GroupManager(FakeObject())
         self.assertIsInstance(mgr, mixins.CRUDMixin)
         self.assertEqual(mgr._obj_cls, Group)
+
+
+class ProjectMemberTests(unittest.TestCase):
+    def test_inheritance(self):
+        self.assertIsInstance(ProjectMember(FakeGitlab()), base.RESTObject)
+
+
+class ProjectMemberManagerTests(unittest.TestCase):
+    def test_inheritance(self):
+        mgr = ProjectMemberManager(FakeObject())
+        self.assertIsInstance(mgr, mixins.CRUDMixin)
+        self.assertEqual(mgr._obj_cls, ProjectMember)
+
+
+class ProjectTests(unittest.TestCase):
+    def test_inheritance(self):
+        obj = Project(FakeGitlab())
+        self.assertIsInstance(obj, base.RESTObject)
+        self.assertIsInstance(obj.members, ProjectMemberManager)
+
+
+class ProjectManagerTests(unittest.TestCase):
+    def test_inheritance(self):
+        mgr = ProjectManager(FakeObject())
+        self.assertIsInstance(mgr, mixins.CRUDMixin)
+        self.assertEqual(mgr._obj_cls, Project)
