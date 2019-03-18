@@ -5,7 +5,17 @@ from GitLabApi.exceptions import *
 from core.exceptions import WrongFormError
 
 
-class VisibilityLevelForm(forms.Form):
+class FormMethods(forms.Form):
+    def add_error_dict(self, error_dict):
+        for field, err_msg in error_dict.items():
+            if isinstance(err_msg, list):
+                for err in err_msg:
+                    self.add_error(field, "{0}: {1}".format(field.capitalize(), err))
+            else:
+                self.add_error(field, "{0}: {1}".format(field.capitalize(), err_msg))
+
+
+class VisibilityLevelForm(FormMethods):
     PRIVATE = 'private'
     Internal = 'internal'
     PUBLIC = 'public'
@@ -17,6 +27,24 @@ class VisibilityLevelForm(forms.Form):
 
     visibility = forms.ChoiceField(label="Visibility", choices=VISIBILITY_CHOICES, initial=PRIVATE,
                                    widget=forms.Select())
+
+
+class AccessLevelForm(FormMethods):
+    ACCESS_GUEST = 10
+    ACCESS_REPORTER = 20
+    ACCESS_DEVELOPER = 30
+    ACCESS_MASTER = 40
+    ACCESS_OWNER = 50
+    ACCESS_LEVEL_CHOICES = (
+        (ACCESS_GUEST, 'Guest'),
+        (ACCESS_REPORTER, 'Reporter'),
+        (ACCESS_DEVELOPER, 'Developer'),
+        (ACCESS_MASTER, 'Master'),
+        (ACCESS_OWNER, 'Owner'),
+    )
+
+    access_level = forms.ChoiceField(label="Access Level", choices=ACCESS_LEVEL_CHOICES, initial=ACCESS_GUEST,
+                                     widget=forms.Select())
 
 
 class GroupForm(VisibilityLevelForm):
@@ -34,14 +62,26 @@ class GroupForm(VisibilityLevelForm):
                 GitLabApi(user_id).groups.create(data)
                 return
             except GitlabCreateError as error:
-                err_dict = error.decode()
-                self.add_error_dict(err_dict)
+                self.add_error_dict(error.get_error_dict())
         raise WrongFormError(self.errors.as_data())
 
-    def add_error_dict(self, error_dict):
-        for field, err_msg in error_dict.items():
-            if isinstance(err_msg, list):
-                for err in err_msg:
-                    self.add_error(field, "{0}: {1}".format(field.capitalize(), err))
-            else:
-                self.add_error(field, "{0}: {1}".format(field.capitalize(), err_msg))
+
+class GroupMemberForm(AccessLevelForm):
+    username = forms.CharField(label='Username', max_length=50)
+
+    field_order = ['username', 'access_level']
+
+    def save_in_gitlab(self, user_id, group_id=None):
+        if self.is_valid():
+            data = dict(self.cleaned_data)
+            try:
+                gitlab_api = GitLabApi(user_id)
+                new_user_id = gitlab_api.users.get(username=data['username']).id
+                gitlab_api.groups.get(group_id).members.create({
+                    'user_id': new_user_id,
+                    'access_level': data['access_level']
+                })
+                return
+            except GitlabOperationError as error:
+                self.add_error_dict(error.get_error_dict())
+        raise WrongFormError(self.errors.as_data())

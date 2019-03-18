@@ -191,6 +191,42 @@ class MockGroupsUrls(MockUrlCRUD):
         return res
 
 
+class MockUserObjUrls(MockUrlSave, MockUrlDelete):
+    _path = 'users'
+
+    def get_save_content(self):
+        return GitLabContent.get_user()
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_save_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        return res
+
+
+class MockUsersUrls(MockUrlCRUD):
+    _path = 'users'
+    _mock_user_obj_url = MockUserObjUrls()
+
+    def get_get_content(self):
+        return GitLabContent.get_user()
+
+    def get_list_content(self):
+        return GitLabContent.get_user_list()
+
+    def get_create_content(self):
+        return GitLabContent.get_user()
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_list_url(**kwargs))
+        res.append(self.get_mock_get_url(**kwargs))
+        res.append(self.get_mock_create_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        res.extend(self._mock_user_obj_url.get_all_mock_urls(**kwargs))
+        return res
+
+
 @all_requests
 def mock_all_urls(url, request):
     raise exceptions.NoMockedUrlError("Url '{}' is not mocked".format(url))
@@ -198,10 +234,12 @@ def mock_all_urls(url, request):
 
 class MockGitLabUrl(MockUrlBase):
     _mock_groups_url = MockGroupsUrls()
+    _mock_users_url = MockUsersUrls()
 
     def get_all_mock_urls(self, **kwargs):
         res = super().get_all_mock_urls(**kwargs)
         res.extend(self._mock_groups_url.get_all_mock_urls(**kwargs))
+        res.extend(self._mock_users_url.get_all_mock_urls(**kwargs))
 
         res.append(mock_all_urls)
         return res

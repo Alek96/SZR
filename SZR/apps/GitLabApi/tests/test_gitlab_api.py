@@ -5,6 +5,7 @@ from django.conf import settings
 
 from GitLabApi import *
 from GitLabApi.MockUrls import *
+from GitLabApi.exceptions import *
 from core.tests.test_models import GitlabUserModelMethod
 from core.models import GitlabUser
 
@@ -97,10 +98,10 @@ class GitLabApiTestsCases:
         pass
 
     class TestSaveObj(TestBase, MockUrlSave):
-        def test_save_obj(self):
+        def test_save_obj(self, **kwargs):
             content = self.get_save_content()
 
-            with HTTMock(self.get_mock_save_url()):
+            with HTTMock(self.get_mock_save_url(**kwargs)):
                 obj = self._gitlab_api_mgr.save()
                 self.assertFalse(obj)
 
@@ -131,36 +132,49 @@ class TestGitLabGroupsApi(GitLabApiTestsCases.TestCRUD, MockGroupsUrls):
                     self.assertEqual(getattr(group, key), value)
 
 
-class TestGitLabGroupObjApi(GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockGroupObjUrls):
+class TestGitLabGroupsChildren(GitLabApiTestsCases.TestBase):
     _group_id = 1
 
     def setUp(self):
         super().setUp()
-        self._gitlab_api_mgr = self.gitlab_api.groups.get(self._group_id, lazy=True)
+        mock_get_url = MockGroupsUrls().get_mock_get_url()
+        with HTTMock(mock_get_url):
+            self._gitlab_groups = self.gitlab_api.groups.get(self._group_id)
 
 
-class TestGitLabGroupSubgroupApi(GitLabApiTestsCases.TestList, MockGroupSubgroupsUrls):
-    _group_id = 1
-
-    def setUp(self):
-        super().setUp()
-        self._gitlab_api_mgr = self.gitlab_api.groups.get(self._group_id, lazy=True).subgroups
-
-
-class TestGitLabGroupProjectsApi(GitLabApiTestsCases.TestList, MockGroupProjectsUrls):
-    _group_id = 1
+class TestGitLabGroupObjApi(TestGitLabGroupsChildren,
+                            GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockGroupObjUrls):
 
     def setUp(self):
         super().setUp()
-        self._gitlab_api_mgr = self.gitlab_api.groups.get(self._group_id, lazy=True).projects
+        self._gitlab_api_mgr = self._gitlab_groups
+
+    def test_save_obj(self, **kwargs):
+        super().test_save_obj(args={'visibility': self._gitlab_api_mgr.visibility})
 
 
-class TestGitLabGroupMembersApi(GitLabApiTestsCases.TestCRUD, MockGroupMembersUrls):
-    _group_id = 1
+class TestGitLabGroupSubgroupApi(TestGitLabGroupsChildren,
+                                 GitLabApiTestsCases.TestList, MockGroupSubgroupsUrls):
 
     def setUp(self):
         super().setUp()
-        self._gitlab_api_mgr = self.gitlab_api.groups.get(self._group_id, lazy=True).members
+        self._gitlab_api_mgr = self._gitlab_groups.subgroups
+
+
+class TestGitLabGroupProjectsApi(TestGitLabGroupsChildren,
+                                 GitLabApiTestsCases.TestList, MockGroupProjectsUrls):
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self._gitlab_groups.projects
+
+
+class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
+                                GitLabApiTestsCases.TestCRUD, MockGroupMembersUrls):
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self._gitlab_groups.members
 
     def get_create_args(self):
         return GitLabContent.get_new_member_args()
@@ -185,3 +199,40 @@ class TestGitLabGroupMembersApi(GitLabApiTestsCases.TestCRUD, MockGroupMembersUr
             for group in group_ext:
                 for content in content_list:
                     self.assertNotEqual(group.id, content['id'])
+
+
+class TestGitLabUsersApi(GitLabApiTestsCases.TestCRUD, MockUsersUrls):
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self.gitlab_api.users
+
+    def get_create_args(self):
+        return GitLabContent.get_new_user_args()
+
+    def test_get_user_with_username(self):
+        content = self.get_get_content()
+
+        with HTTMock(self.get_mock_list_url()):
+            obj = self._gitlab_api_mgr.get(username=content['username'])
+            self.assertTrue(obj)
+            for key, value in content.items():
+                self.assertEqual(getattr(obj, key), value)
+
+    def test_get_user_with_username_does_not_exist(self):
+        with self.assertRaises(GitlabGetError) as error:
+            with mock.patch.object(self._gitlab_api_mgr, 'list', return_value=[]):
+                obj = self._gitlab_api_mgr.get(username='username')
+        self.assertEqual(error.exception.get_error_dict(), {"username": ["Does not exist"]})
+
+
+class TestGitLabUserObjApi(GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockUserObjUrls):
+    _user_id = 1
+
+    def setUp(self):
+        super().setUp()
+        self._gitlab_api_mgr = self.gitlab_api.users.get(self._user_id, lazy=True)
+
+    def test_save_obj(self):
+        with self.assertRaises(NotImplementedError):
+            super().test_save_obj()

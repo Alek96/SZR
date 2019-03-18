@@ -3,7 +3,7 @@ import os
 from celery import Celery
 from django.conf import settings
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "SZR.settings.production")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "SZR.settings.development")
 
 app = Celery('SZR')
 app.config_from_object('django.conf:settings', namespace='CELERY')

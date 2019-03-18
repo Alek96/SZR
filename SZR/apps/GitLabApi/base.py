@@ -5,10 +5,7 @@ class RESTObject(object):
         })
 
     def __getattr__(self, name):
-        # if name in self._attrs:
         return getattr(self._rest_object, name)
-        # else:
-        #     raise AttributeError(name)
 
     def __setattr__(self, name, value):
         setattr(self._rest_object, name, value)

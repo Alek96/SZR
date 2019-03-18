@@ -182,6 +182,25 @@ class TestMockGroupsUrls(MockUrlsTestsCases.TestCRUD, MockGroupsUrls):
         self._test_mock_group_obj_urls._test_get_all_mock_urls()
 
 
+class TestMockUserObjUrls(MockUrlsTestsCases.TestSaveObj, MockUrlsTestsCases.TestDeleteObj, MockUserObjUrls):
+
+    def _test_get_all_mock_urls(self):
+        self._test_save_obj()
+        self._test_delete_obj()
+
+
+class TestMockUsersUrls(MockUrlsTestsCases.TestCRUD, MockUsersUrls):
+    _test_mock_user_obj_urls = TestMockUserObjUrls()
+
+    def _test_get_all_mock_urls(self):
+        self._test_list()
+        self._test_get()
+        self._test_create()
+        self._test_delete()
+
+        self._test_mock_user_obj_urls._test_get_all_mock_urls()
+
+
 class TestMockGitLabUrl(unittest.TestCase, MockGitLabUrl):
     _test_mock_groups_url = TestMockGroupsUrls()
 

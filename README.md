@@ -45,7 +45,7 @@ Check the status to make sure everything is running smooth:
 ```
 sudo systemctl status rabbitmq-server
 ```
-Open file **SZR/settings/my_social_keys.py** and set **CELERY_BROKER_URL** to point your broker url. For example *'amqp://localhost:5672'*.
+Open file **configs/my_social_keys.py** and set **CELERY_BROKER_URL** to point your broker url. For example *'amqp://localhost:5672'*.
 
 #### Running Celery 
 ##### Manually  
@@ -88,5 +88,5 @@ Go to gitlab_url/admin/applications and add new application.
 In **Name** write whatever you want.   
 In **Redirect URI** write url to authorisation url in your application for example *http<span></span>://localhost:1234/auth/complete/gitlab/*   
 Check **Trusted**, **api** and **read_user**.  
-Next open file SZR/settings/my_social_keys.py and copy **Application ID** to SOCIAL_AUTH_GITLAB_KEY, 
+Next open file configs/my_social_keys.py and copy **Application ID** to SOCIAL_AUTH_GITLAB_KEY, 
 **Secret** to SOCIAL_AUTH_GITLAB_SECRET and set SOCIAL_AUTH_GITLAB_API_URL to point your gitlab url.

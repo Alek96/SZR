@@ -1,6 +1,7 @@
-from GitLabApi.mixins import *
-
 from gitlab import base
+
+from GitLabApi.mixins import *
+from GitLabApi.exceptions import *
 
 
 class GroupSubgroup(RESTObject):
@@ -27,6 +28,11 @@ class GroupMemberManager(CRUDMixin):
     _obj_cls = GroupMember
 
     def all(self, **kwargs):
+
+        """
+        gitlab.v4.objects.GroupMemberManager.all() returns dict, so we need convert them to objects, like in list method
+        Code is copied from gitlab.mixins.ListMixin.list
+        """
         obj = self._rest_manager.all(**kwargs)
 
         if isinstance(obj, list):
@@ -62,6 +68,13 @@ class Group(ObjectSaveMixin, ObjectDeleteMixin):
             'members': GroupMemberManager(rest_object.members),
         })
 
+    def save(self, **kwargs):
+        """
+        if visibility level is not specified, server will set it to public, overwriting current visibility level.
+        """
+        self.visibility = getattr(self, 'visibility')
+        super().save(**kwargs)
+
 
 class GroupManager(CRUDMixin):
     _obj_cls = Group
@@ -74,3 +87,29 @@ class GroupManager(CRUDMixin):
         group_list.sort(key=_sort_by_full_name)
 
         return [item for item in group_list if not item.parent_id]
+
+
+class User(ObjectSaveMixin, ObjectDeleteMixin):
+
+    def save(self, **kwargs):
+        """
+        This method in gitlab module need email to save obj, but GitLab server does not sand as this information.
+        """
+        raise NotImplementedError("gitlab module does not have working method")
+
+
+class UserManager(CRUDMixin):
+    _obj_cls = User
+
+    def get(self, id=None, username=None, **kwargs):
+        """
+        Can get user by its username
+        """
+        if not username:
+            return super().get(id, **kwargs)
+        else:
+            user = self.list(username=username)
+            if not user:
+                raise GitlabGetError(error_message='Failed to get user {"username": ["Does not exist"]}')
+            return user[0]
+

@@ -8,7 +8,7 @@ from core.tests.test_view import SimpleUrlsTestsCases
 from core.tests.test_view import LoginMethods
 from GitLabApi import mock_all_gitlab_url
 from GitLabApi import objects
-from groups.tests.test_forms import GroupFormTestAttributes
+from groups.tests.test_forms import *
 
 
 class GitlabWrapperAppNameCase:
@@ -113,7 +113,32 @@ class AjaxLoadSubgroupAndProjectsPageTest(GitlabWrapperAppNameCase.GitlabWrapper
         all(self.assertIsInstance(project, objects.GroupProject) for project in response.context['project_list'])
 
 
-class NewSubgroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest, GroupFormTestAttributes):
+class NewGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_group'
+
+    @LoginMethods.login_wrapper
+    @mock_all_gitlab_url
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_template.html')
+
+    @LoginMethods.login_wrapper
+    @mock_all_gitlab_url
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_template.html')
+
+    @LoginMethods.login_wrapper
+    @mock_all_gitlab_url
+    def test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), GroupFormTests.valid_form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('groups:index'))
+
+
+class NewSubgroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'new_subgroup'
     args = {'group_id': '1'}
 
@@ -122,43 +147,44 @@ class NewSubgroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest, Gro
     def test_page_get(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'groups/new_group.html')
+        self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
     @mock_all_gitlab_url
     def test_page_post_not_valid_data(self):
         response = self.client.post(self.get_url())
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'groups/new_group.html')
+        self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
     @mock_all_gitlab_url
     def test_page_post_valid_data(self):
-        response = self.client.post(self.get_url(), self.valid_form_data)
+        response = self.client.post(self.get_url(), GroupFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('groups:group_detail', args=('1',)))
+        self.assertEqual(response.url, reverse('groups:group_detail', args=(self.args['group_id'],)))
 
 
-class NewGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest, GroupFormTestAttributes):
-    name = 'new_group'
+class NewGroupMemberPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_group_members'
+    args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
     @mock_all_gitlab_url
     def test_page_get(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'groups/new_group.html')
+        self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
     @mock_all_gitlab_url
     def test_page_post_not_valid_data(self):
         response = self.client.post(self.get_url())
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'groups/new_group.html')
+        self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
     @mock_all_gitlab_url
     def test_page_post_valid_data(self):
-        response = self.client.post(self.get_url(), self.valid_form_data)
+        response = self.client.post(self.get_url(), GroupMemberFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse('groups:index'))
+        self.assertEqual(response.url, reverse('groups:group_members', args=(self.args['group_id'],)))

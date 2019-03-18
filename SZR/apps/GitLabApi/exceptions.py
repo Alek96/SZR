@@ -5,7 +5,11 @@ import json
 class GitlabError(Exception):
     def __init__(self, error_message="", response_code=None, response_body=None):
         super().__init__(error_message)
-        self.error_message = error_message
+        if "=>" in error_message:
+            self.error_message = self._decode_from_ruby_dict(error_message)
+        else:
+            self.error_message = error_message
+
         self.response_code = response_code
         self.response_body = response_body
 
@@ -15,27 +19,35 @@ class GitlabError(Exception):
         else:
             return "{0}".format(self.error_message)
 
+    def _decode_from_ruby_dict(self, ruby_dict):
+        dict_str = ruby_dict.replace(":", '"')
+        dict_str = dict_str.replace("=>", '" : ')
+        dict_str = dict_str.replace('""', '"')
+        return dict_str
+
+    def get_error_dict(self):
+        dict_str = self.error_message[self.error_message.index('{'):]
+        return json.loads(dict_str)
+
 
 class NoMockedUrlError(GitlabError):
     pass
 
 
 class GitlabOperationError(GitlabError):
+    pass
 
-    def decode(self):
-        dict_str = self.error_message[self.error_message.index('{'):]
-        dict_str = dict_str.replace(":", '"')
-        dict_str = dict_str.replace("=>", '" : ')
-        dict_str = dict_str.replace('""', '"')
-        return json.loads(dict_str)
+
+class GitlabListError(GitlabOperationError):
+    pass
+
+
+class GitlabGetError(GitlabOperationError):
+    pass
 
 
 class GitlabCreateError(GitlabOperationError):
     pass
-
-
-def get_gitlab_create_error_on_group():
-    return GitlabCreateError("Failed to save group {:path=>[\"has already been taken\"]}")
 
 
 def on_error(expect_error, raise_error):

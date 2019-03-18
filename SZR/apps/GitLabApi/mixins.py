@@ -47,4 +47,17 @@ class ObjectDeleteMixin(RESTObject):
 class ObjectSaveMixin(RESTObject):
 
     def save(self, **kwargs):
+        """
+        Save the changes made to the object to the server.
+
+        The object is updated to match what the server returns.
+
+        :param kwargs: Extra options to send to the server (e.g. sudo)
+        :return: None
+
+        # not implemented yet
+        # :raise
+        #     GitlabAuthenticationError: If authentication is not correct
+        #     GitlabUpdateError: If the server cannot perform the request
+        """
         self._rest_object.save(**kwargs)

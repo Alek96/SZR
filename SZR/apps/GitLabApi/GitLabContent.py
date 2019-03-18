@@ -139,3 +139,34 @@ def get_new_member_args(id=1):
         "expires_at": member['expires_at']
     }
     return new_member
+
+
+def get_user():
+    user = {
+        "id": 1,
+        "username": "john_smith",
+        "name": "John Smith",
+        "state": "active",
+        "avatar_url": "http://localhost:3000/uploads/user/avatar/1/cd8.jpeg",
+        "web_url": "http://localhost:3000/john_smith"
+    }
+    return user
+
+
+def get_user_list(size=6):
+    user_list = []
+    for idx in range(0, size):
+        user = get_user()
+        user['id'] = idx + 1
+        user_list.append(user)
+    return user_list
+
+
+def get_new_user_args():
+    user = get_user()
+    new_user = {
+        "username": user['username'],
+        "name": user['name'],
+        "email": "email@example.com",
+    }
+    return new_user

@@ -1,11 +1,45 @@
-{% for field in form %}
-    <div class="form-group d-block mx-auto">
-        <div class="offset-sm-2 col-sm-10">
-            <span class="text-danger small">{{ field.errors }}</span>
-        </div>
-        <div class="row">
-            <label class="control-label col-md-3" for="title">{{ field.label_tag }}</label>
-            <div class="col-md-9">{{ field }}</div>
+{% extends 'navbar.html' %}
+{% load staticfiles %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block group_active %}active{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/groups_index.css' %}"/>
+{% endblock %}
+
+{% block body %}
+    <div class="group-body">
+        <div class="container">
+            <div class="col-sm-12 col-md-10 col-lg-6 d-block mx-auto">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="text-center">
+                            <h2>{{ fields_title|linebreaks }}</h2>
+                        </div>
+                        {% if error_message %}
+                            <div class="text-center">
+                                <p><strong>{{ error_message|linebreaks }}</strong></p>
+                            </div>
+                        {% endif %}
+                        <form class="form-horizontal justify-content-center" role="form" action=""
+                              method="post" style="display: block;" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% include 'groups/form_base_template.html' %}
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="d-block mx-auto">
+                                        <button type="submit" class="center-block btn btn-success">
+                                            Submit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-{% endfor %}
+{% endblock %}

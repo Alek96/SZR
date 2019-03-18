@@ -81,7 +81,7 @@ def new_group(request):
     try:
         form.save_in_gitlab(request.user.id)
     except forms.WrongFormError:
-        return render(request, 'groups/new_group.html', context)
+        return render(request, 'groups/form_template.html', context)
     else:
         return HttpResponseRedirect(reverse('groups:index'))
 
@@ -97,6 +97,22 @@ def new_subgroup(request, group_id):
     try:
         form.save_in_gitlab(request.user.id, group_id)
     except forms.WrongFormError:
-        return render(request, 'groups/new_group.html', context)
+        return render(request, 'groups/form_template.html', context)
     else:
         return HttpResponseRedirect(reverse('groups:group_detail', args=(group_id,)))
+
+
+@login_required
+def new_group_members(request, group_id):
+    form = forms.GroupMemberForm(request.POST or None)
+    context = {
+        "form": form,
+        "page_title": 'New Group Member',
+        "fields_title": 'New Group Member',
+    }
+    try:
+        form.save_in_gitlab(request.user.id, group_id)
+    except forms.WrongFormError:
+        return render(request, 'groups/form_template.html', context)
+    else:
+        return HttpResponseRedirect(reverse('groups:group_members', args=(group_id,)))
