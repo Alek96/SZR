@@ -44,11 +44,6 @@ class VisibilityLevelTest(TestCase):
         VisibilityLevelForm()
 
 
-class AccessLevelTest(TestCase):
-    def test_init(self):
-        AccessLevelForm()
-
-
 class GroupFormTests(LoginMethods):
     valid_form_data = {
         'name': "Group_name",
@@ -96,7 +91,7 @@ class GroupFormTests(LoginMethods):
 class GroupMemberFormTests(LoginMethods):
     valid_form_data = {
         'username': "username",
-        'access_level': "{0}".format(GroupMemberForm.ACCESS_GUEST),
+        'access_level': models.AddGroupMemberTask.ACCESS_GUEST,
     }
 
     def test_init(self):

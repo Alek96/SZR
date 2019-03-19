@@ -3,6 +3,7 @@ from django import forms
 from GitLabApi import *
 from GitLabApi.exceptions import *
 from core.exceptions import WrongFormError
+from groups import models
 
 
 class FormMethods(forms.Form):
@@ -29,24 +30,6 @@ class VisibilityLevelForm(FormMethods):
                                    widget=forms.Select())
 
 
-class AccessLevelForm(FormMethods):
-    ACCESS_GUEST = 10
-    ACCESS_REPORTER = 20
-    ACCESS_DEVELOPER = 30
-    ACCESS_MASTER = 40
-    ACCESS_OWNER = 50
-    ACCESS_LEVEL_CHOICES = (
-        (ACCESS_GUEST, 'Guest'),
-        (ACCESS_REPORTER, 'Reporter'),
-        (ACCESS_DEVELOPER, 'Developer'),
-        (ACCESS_MASTER, 'Master'),
-        (ACCESS_OWNER, 'Owner'),
-    )
-
-    access_level = forms.ChoiceField(label="Access Level", choices=ACCESS_LEVEL_CHOICES, initial=ACCESS_GUEST,
-                                     widget=forms.Select())
-
-
 class GroupForm(VisibilityLevelForm):
     name = forms.CharField(label='Name', max_length=50)
     path = forms.SlugField(label='Path', max_length=50)
@@ -66,10 +49,10 @@ class GroupForm(VisibilityLevelForm):
         raise WrongFormError(self.errors.as_data())
 
 
-class GroupMemberForm(AccessLevelForm):
-    username = forms.CharField(label='Username', max_length=50)
-
-    field_order = ['username', 'access_level']
+class GroupMemberForm(forms.ModelForm, FormMethods):
+    class Meta:
+        model = models.AddGroupMemberTask
+        fields = ['username', 'access_level']
 
     def save_in_gitlab(self, user_id, group_id=None):
         if self.is_valid():

@@ -114,8 +114,22 @@ class MockGroupProjectsUrls(MockUrlList):
         return res
 
 
+class MockGroupMemberObjUrls(MockUrlSave, MockUrlDelete):
+    _path = 'groups/[0-9]+/members'
+
+    def get_save_content(self):
+        return GitLabContent.get_member()
+
+    def get_all_mock_urls(self, **kwargs):
+        res = super().get_all_mock_urls(**kwargs)
+        res.append(self.get_mock_save_url(**kwargs))
+        res.append(self.get_mock_delete_url(**kwargs))
+        return res
+
+
 class MockGroupMembersUrls(MockUrlCRUD):
     _path = 'groups/[0-9]+/members'
+    _mock_group_members_obj_url = MockGroupMemberObjUrls()
 
     def get_get_content(self):
         return GitLabContent.get_member()
@@ -141,6 +155,7 @@ class MockGroupMembersUrls(MockUrlCRUD):
         res.append(self.get_mock_get_url(**kwargs))
         res.append(self.get_mock_create_url(**kwargs))
         res.append(self.get_mock_delete_url(**kwargs))
+        res.extend(self._mock_group_members_obj_url.get_all_mock_urls(**kwargs))
         return res
 
 
@@ -245,13 +260,19 @@ class MockGitLabUrl(MockUrlBase):
         return res
 
 
-def mock_all_gitlab_url(func=None, raise_error=None):
+def mock_all_gitlab_url(func=None, **wrapped_kwargs):
+    """
+
+    :param func: Wrapped function
+    :param raise_error: Error to raise
+    :return:
+    """
     if func is None:
-        return functools.partial(mock_all_gitlab_url, raise_error=raise_error)
+        return functools.partial(mock_all_gitlab_url, **wrapped_kwargs)
 
     @functools.wraps(func)
     def wrapped_f(*args, **kwargs):
-        with HTTMock(*MockGitLabUrl().get_all_mock_urls(raise_error=raise_error)):
+        with HTTMock(*MockGitLabUrl().get_all_mock_urls(**wrapped_kwargs)):
             return func(*args, **kwargs)
 
     return wrapped_f

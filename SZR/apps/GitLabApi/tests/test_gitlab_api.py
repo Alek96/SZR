@@ -49,9 +49,9 @@ class GitLabApiTestsCases:
             if not args:
                 self.assertEqual(body, None)
             else:
-                body_dcit = json.loads(body)
+                body_dict = json.loads(body)
                 for key, value in args.items():
-                    self.assertEqual(body_dcit[key], value)
+                    self.assertEqual(body_dict[key], value)
 
     class TestList(TestBase, MockUrlList):
         def test_list(self):
@@ -179,15 +179,21 @@ class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
     def get_create_args(self):
         return GitLabContent.get_new_member_args()
 
-    def test_all(self):
+    def _test_all(self, **kwargs):
         content = self.get_all_content()
 
         with HTTMock(self.get_mock_all_url()):
-            group_list = self._gitlab_api_mgr.all()
+            group_list = self._gitlab_api_mgr.all(**kwargs)
             self.assertGreater(len(group_list), 0)
             for group_info, group in zip(content, group_list):
                 for key, value in group_info.items():
                     self.assertEqual(getattr(group, key), value)
+
+    def test_all(self):
+        self._test_all()
+
+    def test_all_single_content_element(self):
+        self._test_all(as_list=False)
 
     def test_external(self):
         content_list = self.get_list_content()
@@ -199,6 +205,20 @@ class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
             for group in group_ext:
                 for content in content_list:
                     self.assertNotEqual(group.id, content['id'])
+
+
+class TestGitLabGroupMemberObjApi(TestGitLabGroupsChildren,
+                                  GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
+                                  MockGroupMemberObjUrls):
+
+    def setUp(self):
+        super().setUp()
+        mock_get_url = MockGroupMembersUrls().get_mock_get_url()
+        with HTTMock(mock_get_url):
+            self._gitlab_api_mgr = self._gitlab_groups.members.get(1)
+
+    def test_save_obj(self, **kwargs):
+        super().test_save_obj(args={'access_level': self._gitlab_api_mgr.access_level})
 
 
 class TestGitLabUsersApi(GitLabApiTestsCases.TestCRUD, MockUsersUrls):

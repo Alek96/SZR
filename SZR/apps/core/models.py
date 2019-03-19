@@ -121,6 +121,7 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
 class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
     owner = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, related_name='owned_tasks_%(class)s')
     celery_task = models.OneToOneField(PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True)
+    error_msg = models.CharField(max_length=2000, null=True, blank=True)
 
     task_group = None  # models.ForeignKey(TaskGroup, on_delete=models.CASCADE, related_name='tasks_set_%(class)s')
     tracker = None

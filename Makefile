@@ -96,15 +96,19 @@ lint: flake8
 
 
 # runs the tests
-#	While we just have a bare project layout, this is more or less a dummy.
 test: ensure_virtual_env
+
+ifeq ($(DJANGO_TEST_SETTINGS_FILE),development)
+	$(MAKE) test/dev
+else
 	@echo "Using setting file '$(DJANGO_TEST_SETTINGS_FILE)'..."
 	@echo ""
 	@$(PYTHON_BIN)/coverage run $(PYTHON_BIN)/django-admin.py test $(DJANGO_TEST_POSTFIX) --debug-mode ${module_name}
+endif
 
 # runs the tests with development settings
 test/dev:
-	$(MAKE) test DJANGO_TEST_SETTINGS_FILE=development
+	$(MAKE) test DJANGO_TEST_SETTINGS_FILE=testing_dev
 
 # runs the tests with production settings
 test/prod:
