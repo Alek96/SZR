@@ -16,10 +16,10 @@ class AddGroupMemberTask(BaseTask):
         new_gitlab_user, _ = models.GitlabUser.objects.get_or_create(gitlab_id=new_user_id)
         self._task.new_user = new_gitlab_user
 
-        if not self._task.gitlab_group.gitlab_id:
-            raise DoesNotContainGitlabId('Gitlab group {0}'.format(self._task.gitlab_group_id))
+        if not self._task.task_group.gitlab_group.gitlab_id:
+            raise DoesNotContainGitlabId('Gitlab group {0}'.format(self._task.task_group.gitlab_group_id))
 
-        gitlab_api.groups.get(self._task.gitlab_group.gitlab_id).members.create({
+        gitlab_api.groups.get(self._task.task_group.gitlab_group.gitlab_id).members.create({
             'user_id': new_user_id,
             'access_level': self._task.access_level,
         })

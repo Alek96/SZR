@@ -37,14 +37,13 @@ class AbstractAccessLevel(models.Model):
 
 
 class AddGroupMemberTaskGroup(AbstractTaskGroup):
+    gitlab_group = models.ForeignKey(GitlabGroup, on_delete=models.CASCADE)
     tracker = FieldTracker()  # We need specified this field every time after inheritance
 
 
 class AddGroupMemberTask(AbstractTask, AbstractAccessLevel):
     username = models.CharField(max_length=100)
-
     new_user = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, null=True, blank=True)
-    gitlab_group = models.ForeignKey(GitlabGroup, on_delete=models.CASCADE)
 
     task_group = models.ForeignKey(AddGroupMemberTaskGroup, on_delete=models.CASCADE, related_name='tasks_set')
     tracker = FieldTracker()  # We need specified this field every time after inheritance

@@ -1,9 +1,12 @@
 from django import forms
+from django.contrib.admin import widgets
+from django.utils.translation import ugettext as _
 
 from GitLabApi import *
 from GitLabApi.exceptions import *
 from core.exceptions import WrongFormError
 from groups import models
+from core.models import GitlabUser
 
 
 class FormMethods(forms.Form):
@@ -49,12 +52,33 @@ class GroupForm(VisibilityLevelForm):
         raise WrongFormError(self.errors.as_data())
 
 
+class GroupMemberGroupForm(forms.ModelForm, FormMethods):
+    class Meta:
+        model = models.AddGroupMemberTaskGroup
+        fields = ['name', 'execute_date']
+        widgets = {
+            # 'execute_date': forms.SplitDateTimeWidget,
+            'execute_date': widgets.AdminSplitDateTime,
+        }
+        field_classes = {
+            'execute_date': forms.SplitDateTimeField,
+        }
+
+    def save_in_task_group(self, group_id):
+        if self.is_valid():
+            task_group = self.save(commit=False)
+            task_group.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
+            task_group.save()
+        else:
+            raise WrongFormError(self.errors.as_data())
+
+
 class GroupMemberForm(forms.ModelForm, FormMethods):
     class Meta:
         model = models.AddGroupMemberTask
         fields = ['username', 'access_level']
 
-    def save_in_gitlab(self, user_id, group_id=None):
+    def save_in_gitlab(self, user_id, group_id):
         if self.is_valid():
             data = dict(self.cleaned_data)
             try:
@@ -68,3 +92,12 @@ class GroupMemberForm(forms.ModelForm, FormMethods):
             except GitlabOperationError as error:
                 self.add_error_dict(error.get_error_dict())
         raise WrongFormError(self.errors.as_data())
+
+    def save_in_task(self, user_id, task_group_id):
+        if self.is_valid():
+            task = self.save(commit=False)
+            task.owner = GitlabUser.objects.get(auth_user_id=user_id)
+            task.task_group = models.AddGroupMemberTaskGroup.objects.get(id=task_group_id)
+            task.save()
+        else:
+            raise WrongFormError(self.errors.as_data())

@@ -1,11 +1,20 @@
 {% extends 'navbar.html' %}
-{% load staticfiles %}
+{% load i18n static admin_urls staticfiles %}
 
 {% block title %}{{ page_title }}{% endblock %}
 {% block group_active %}active{% endblock %}
 
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/groups_index.css' %}"/>
+
+    <script type="text/javascript" src="{% url 'javascript-catalog' %}"></script>
+    <script type="text/javascript" src="{% static '/admin/js/core.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static '/admin/css/widgets.css' %}">
+
+    <style>.calendar > table > caption {
+        caption-side: unset
+    }</style><!--caption fix for bootstrap4-->
+    {{ form.media }}
 {% endblock %}
 
 {% block body %}
@@ -42,4 +51,5 @@
             </div>
         </div>
     </div>
+
 {% endblock %}

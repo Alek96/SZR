@@ -69,6 +69,8 @@ class AbstractTaskStatus(models.Model):
 
 
 class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
+    name = models.CharField(max_length=2000)
+
     tasks_number = models.PositiveIntegerField(default=0)
     finished_tasks_number = models.PositiveIntegerField(default=0)
     failed_task_number = models.PositiveIntegerField(default=0)

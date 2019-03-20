@@ -15,12 +15,13 @@ class AddGroupMemberTaskTests(TestCase, GitlabUserModelMethod):
     def setUp(self):
         self.gitlab_user = self.create_gitlab_user()
         self.gitlab_group = models.GitlabGroup.objects.create(gitlab_id=1)
-        self.task_group_model = models.AddGroupMemberTaskGroup.objects.create()
+        self.task_group_model = models.AddGroupMemberTaskGroup.objects.create(
+            gitlab_group=self.gitlab_group
+        )
         self.task_model = models.AddGroupMemberTask.objects.create(
             owner=self.gitlab_user,
             task_group=self.task_group_model,
             username='username',
-            gitlab_group=self.gitlab_group
         )
 
     def create_gitlab_user(self, **kwargs):

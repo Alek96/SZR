@@ -3,6 +3,8 @@ from django.conf import settings
 from django.test.runner import DiscoverRunner
 from celery import current_app
 
+import logging
+
 
 class SecretKeyGenerator:
     def __init__(self, secret_file_path):
@@ -53,4 +55,10 @@ class CeleryTestSuiteRunner(DiscoverRunner):
 
     def setup_test_environment(self, **kwargs):
         _set_eager()
-        super(CeleryTestSuiteRunner, self).setup_test_environment(**kwargs)
+        super().setup_test_environment(**kwargs)
+
+    def run_tests(self, test_labels, extra_tests=None, **kwargs):
+        # Don't show logging messages while testing
+        logging.disable(logging.CRITICAL)
+
+        return super().run_tests(test_labels, extra_tests, **kwargs)

@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django import forms
+from django.utils import timezone
 
 from groups.forms import *
 from GitLabApi import mock_all_gitlab_url
@@ -88,6 +89,33 @@ class GroupFormTests(LoginMethods):
         self.assertIn('has already been taken', all_errors['path'][-1])
 
 
+class GroupMemberGroupFormTests(LoginMethods):
+    valid_form_data = {
+        'name': "name",
+    }
+
+    def test_init(self):
+        GroupMemberGroupForm()
+
+    def test_valid_data(self):
+        form = GroupMemberGroupForm(self.valid_form_data)
+        self.assertTrue(form.is_valid())
+        for key, value in self.valid_form_data.items():
+            self.assertEqual(form.cleaned_data[key], value)
+
+    def test_blank_data(self):
+        form = GroupMemberGroupForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual(form.errors['name'], ['This field is required.'])
+
+    def test_save_in_task_group(self):
+        form = GroupMemberGroupForm(self.valid_form_data)
+        form.save_in_task_group(1)
+
+        task_group = models.AddGroupMemberTaskGroup.objects.get(id=1)
+        self.assertEqual(task_group.gitlab_group_id, 1)
+
+
 class GroupMemberFormTests(LoginMethods):
     valid_form_data = {
         'username': "username",
@@ -127,3 +155,22 @@ class GroupMemberFormTests(LoginMethods):
             form.save_in_gitlab(self.user.id, 1)
         all_errors = form.errors
         self.assertIn('Does not exist', all_errors['username'][-1])
+
+    def test_save_in_task_not_valid(self):
+        form = GroupMemberForm({})
+        with self.assertRaises(WrongFormError):
+            form.save_in_task(1, 1)
+
+    @LoginMethods.create_user_wrapper
+    def test_save_in_task(self):
+        task_group = models.AddGroupMemberTaskGroup.objects.create(
+            gitlab_group=models.GitlabGroup.objects.create()
+        )
+
+        form = GroupMemberForm(self.valid_form_data)
+        form.save_in_task(self.user.id, task_group.id)
+
+        task = models.AddGroupMemberTask.objects.get(task_group=task_group)
+        self.assertEqual(task.username, self.valid_form_data['username'])
+        self.assertEqual(task.access_level, self.valid_form_data['access_level'])
+        self.assertEqual(task.owner_id, self.user.id)
