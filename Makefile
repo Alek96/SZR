@@ -8,10 +8,12 @@ DJANGO_TEST_POSTFIX := --settings=$(DJANGO_TEST_SETTINGS) --pythonpath=$(PYTHONP
 
 DJANGO_SERVER_PORT := 1234
 
+REQUIREMENTS_FILE := development
+REQUIREMENTS_POSTFIX := -r requirements/$(REQUIREMENTS_FILE).txt
 
 .PHONY: all help run/dev clean coverage ensure_virtual_env flake8 flake lint \
 		test test/dev test/prod \
-		migrate setup setup/dev refresh refresh/dev refresh/prod update/dev
+		migrate setup/dev refresh refresh/dev refresh/prod update/dev
 
 
 
@@ -29,7 +31,9 @@ all:
 	@echo "                 collecting static assets"
 	@echo "  refresh/dev  Refreshes with development settings"
 	@echo "  refresh/prod Refreshes with production settings"
-	@echo "  setup        Sets up a environment by installing necessary apps"
+	@echo "  install      Installing necessary modules"
+	@echo "  install/com  Installing common necessary modules"
+	@echo "  install/dev  Installing development necessary modules"
 	@echo "  setup/dev    Sets up a development environment by installing"
 	@echo "                 necessary apps, running migrations and creating"
 	@echo "                 a superuser (django::django)"
@@ -115,7 +119,7 @@ test/prod:
 	$(MAKE) test DJANGO_TEST_SETTINGS_FILE=production
 
 
-# migrates the installed apps
+# make migrates the installed apps
 makemigrations: ensure_virtual_env
 	$(PYTHON_BIN)/django-admin.py makemigrations $(DJANGO_TEST_POSTFIX)
 
@@ -123,18 +127,31 @@ makemigrations: ensure_virtual_env
 migrate: ensure_virtual_env
 	$(PYTHON_BIN)/django-admin.py migrate $(DJANGO_TEST_POSTFIX)
 
-# sets up the environment by installing required dependencies
-setup: ensure_virtual_env
+
+# install django
+install/django: ensure_virtual_env
+	@pip install 'Django>=2.0'
+
+# install required dependencies
+install: ensure_virtual_env install/django
 	@pip install pip --upgrade
-	@pip install -r requirements/common.txt
+	@pip install $(REQUIREMENTS_POSTFIX)
+
+# install common dependencies
+install/com: ensure_virtual_env
+	$(MAKE) install REQUIREMENTS_FILE=common
+
+# install development dependencies
+install/dev: ensure_virtual_env
+	$(MAKE) install REQUIREMENTS_FILE=development
+
 
 # sets up the development environment by installing required dependencies,
 #	migrates the apps and creates a dummy user (django::django)
-setup/dev: ensure_virtual_env
-	$(MAKE) setup DJANGO_TEST_SETTINGS_FILE=development
-	@pip install -r requirements/development.txt
+setup/dev: ensure_virtual_env install/dev
 	$(MAKE) migrate DJANGO_TEST_SETTINGS_FILE=development
 	@echo "from django.contrib.auth.models import User; User.objects.filter(email='admin@example.com').delete(); User.objects.create_superuser(username='django', email='admin@example.com', password='django')" | python manage.py shell
+
 
 # refreshes the project by migrating and collecting static assets
 refresh: ensure_virtual_env

@@ -1,6 +1,8 @@
 import functools
 import json
 
+NON_FIELD_ERRORS = '__all__'
+
 
 class GitlabError(Exception):
     def __init__(self, error_message="", response_code=None, response_body=None):
@@ -26,8 +28,11 @@ class GitlabError(Exception):
         return dict_str
 
     def get_error_dict(self):
-        dict_str = self.error_message[self.error_message.index('{'):]
-        return json.loads(dict_str)
+        try:
+            dict_str = self.error_message[self.error_message.index('{'):]
+            return json.loads(dict_str)
+        except ValueError:
+            return {NON_FIELD_ERRORS: [self.error_message]}
 
 
 class NoMockedUrlError(GitlabError):

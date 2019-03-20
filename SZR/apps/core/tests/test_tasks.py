@@ -37,6 +37,7 @@ class BaseTaskTests(TestCase):
         FakeRaiseTask().run(**self.get_run_args())
 
         self.task_model.refresh_from_db()
+        self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
         self.assertEqual(self.task_model.celery_task, None)
         self.assertEqual(self.task_model.error_msg, "Task must define the _run method.")
         self.assertEqual(self.task_model.status, self.task_model.FAILED)
@@ -48,9 +49,10 @@ class BaseTaskTests(TestCase):
         task = self._task_cls()
         with mock.patch.object(task, '_run', side_effect=RuntimeError("Error msg")) as mock_run:
             task.run(**self.get_run_args())
-        mock_run.assert_called_once()
+        mock_run.assert_called_once_with()
 
         self.task_model.refresh_from_db()
+        self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
         self.assertEqual(self.task_model.celery_task, None)
         self.assertEqual(self.task_model.error_msg, "Error msg")
         self.assertEqual(self.task_model.status, self.task_model.FAILED)
@@ -62,6 +64,7 @@ class BaseTaskTests(TestCase):
         self._task_cls().run(**self.get_run_args())
 
         self.task_model.refresh_from_db()
+        self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
         self.assertEqual(self.task_model.celery_task, None)
         self.assertEqual(self.task_model.error_msg, None)
         self.assertEqual(self.task_model.status, self.task_model.COMPLETED)

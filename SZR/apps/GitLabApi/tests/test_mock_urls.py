@@ -28,7 +28,7 @@ class MockUrlsTestsCases:
         def _test_list(self):
             url = self.get_list_url()
             resp = requests.get(url)
-            resp_dict = json.loads(resp.content)
+            resp_dict = json.loads(str(resp.content, 'utf-8'))
             self.assertEqual(resp_dict, self.get_list_content())
 
         def test_list(self):
@@ -42,7 +42,7 @@ class MockUrlsTestsCases:
         def _test_get(self):
             url = self.get_get_url()
             resp = requests.get(url)
-            resp_dict = json.loads(resp.content)
+            resp_dict = json.loads(str(resp.content, 'utf-8'))
             self.assertEqual(resp_dict, self.get_get_content())
 
         def test_get(self):
@@ -56,7 +56,7 @@ class MockUrlsTestsCases:
         def _test_create(self):
             url = self.get_create_url()
             resp = requests.post(url)
-            resp_dict = json.loads(resp.content)
+            resp_dict = json.loads(str(resp.content, 'utf-8'))
             self.assertEqual(resp_dict, self.get_create_content())
 
         def test_create(self):
@@ -70,7 +70,7 @@ class MockUrlsTestsCases:
         def _test_delete(self):
             url = self.get_delete_url()
             resp = requests.delete(url)
-            resp_dict = json.loads(resp.content)
+            resp_dict = json.loads(str(resp.content, 'utf-8'))
             self.assertEqual(resp_dict, self.get_delete_content())
 
         def test_delete(self):
@@ -87,7 +87,7 @@ class MockUrlsTestsCases:
         def _test_save_obj(self):
             url = self.get_save_url()
             resp = requests.put(url)
-            resp_dict = json.loads(resp.content)
+            resp_dict = json.loads(str(resp.content, 'utf-8'))
             self.assertEqual(resp_dict, self.get_save_content())
 
         def test_save_obj(self):
@@ -101,7 +101,7 @@ class MockUrlsTestsCases:
         def _test_delete_obj(self):
             url = self.get_delete_url()
             resp = requests.delete(url)
-            resp_dict = json.loads(resp.content)
+            resp_dict = json.loads(str(resp.content, 'utf-8'))
             self.assertEqual(resp_dict, self.get_delete_content())
 
         def test_delete_obj(self):
@@ -147,7 +147,7 @@ class TestMockGroupMembersUrls(MockUrlsTestsCases.TestCRUD, MockGroupMembersUrls
     def _test_all(self):
         url = self.get_all_url()
         resp = requests.get(url)
-        resp_dict = json.loads(resp.content)
+        resp_dict = json.loads(str(resp.content, 'utf-8'))
         self.assertEqual(resp_dict, self.get_all_content())
 
     def test_all(self):

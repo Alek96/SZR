@@ -2,10 +2,13 @@
 
 [run]
 branch = True
+source = SZR
 omit =
     */__init__.py
     */tmp/*
     */test_*.py
+    SZR/settings/*
+    SZR/wsgi.py
 
 [report]
 precision = 1

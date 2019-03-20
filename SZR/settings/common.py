@@ -132,7 +132,7 @@ MEDIA_URL = '/media/'
 # finally grab the SECRET KEY
 SECRET_KEY = SecretKeyGenerator(SECRET_FILE).get_or_create()
 
-# adjust the minimal login
+# ##### LOGIN CONFIGURATION ###############################
 LOGIN_URL = 'core:login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'core:login'

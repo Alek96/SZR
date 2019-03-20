@@ -10,13 +10,19 @@ from core.models import GitlabUser
 
 
 class FormMethods(forms.Form):
+    def _add_error(self, field, msg):
+        if field == NON_FIELD_ERRORS:
+            self.add_error(None, msg)
+        else:
+            self.add_error(field, msg)
+
     def add_error_dict(self, error_dict):
         for field, err_msg in error_dict.items():
             if isinstance(err_msg, list):
                 for err in err_msg:
-                    self.add_error(field, "{0}: {1}".format(field.capitalize(), err))
+                    self._add_error(field, "{0}: {1}".format(field.capitalize(), err))
             else:
-                self.add_error(field, "{0}: {1}".format(field.capitalize(), err_msg))
+                self._add_error(field, "{0}: {1}".format(field.capitalize(), err_msg))
 
 
 class VisibilityLevelForm(FormMethods):

@@ -40,8 +40,8 @@ class BaseTask(Task):
         self._task.save()
 
     def _finnish(self):
-        self._task.finished_date = timezone.now()
-        self._task.save()
-
         self._task.task_group.increment_finished_tasks_number(self._task.status)
         self._task.task_group.save()
+
+        self._task.finished_date = timezone.now()
+        self._task.save()

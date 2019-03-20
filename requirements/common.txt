@@ -1,7 +1,3 @@
-# **Django** is a high-level Python Web framework
-# See https://www.djangoproject.com/
-Django
-
 # **Python Social Auth** is a high-level Python Web framework
 # See https://python-social-auth.readthedocs.io/en/latest/index.html
 social-auth-app-django

@@ -49,7 +49,8 @@ class GitLabApiTestsCases:
             if not args:
                 self.assertEqual(body, None)
             else:
-                body_dict = json.loads(body)
+                self.assertNotEqual(body, None)
+                body_dict = json.loads(body.decode("utf-8"))
                 for key, value in args.items():
                     self.assertEqual(body_dict[key], value)
 

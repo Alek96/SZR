@@ -1,3 +1,6 @@
+# include common requirement modules
+-r common.txt
+
 # **coverage** measures code coverage of Python programs
 # See http://coverage.readthedocs.io/en/latest/
 coverage
