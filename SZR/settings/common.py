@@ -57,8 +57,8 @@ PREREQUISITE_APPS = [
 ]
 
 PROJECT_APPS = [
-    'core.apps.CoreConfig',
-    'groups.apps.GroupsConfig',
+    'core',
+    'groups',
 ]
 
 DEFAULT_APPS = PREREQUISITE_APPS + PROJECT_APPS

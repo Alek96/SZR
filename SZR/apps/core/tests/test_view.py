@@ -139,14 +139,13 @@ class LoginPageTest(RegistrationAppNameCase.RegistrationAppNameTest):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
 
-    # todo: Erase comment after providing home page ('/')
     def test_login(self):
         self.create_user_to_login()
         response = self.client.post(self.get_login_url(), self.get_user_credentials(), follow=True)
 
-        # self.assertEqual(response.status_code, 200)
-        # self.assertRedirects(response, '/')
-        # self.assertTrue(response.context['user'].is_authenticated)
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, '/')
+        self.assertTrue(response.context['user'].is_authenticated)
         self.assertIn('_auth_user_id', self.client.session)
 
 

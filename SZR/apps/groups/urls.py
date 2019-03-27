@@ -1,8 +1,6 @@
 from django.urls import path, re_path
-from django.conf import settings
 
 from . import views
-from GitLabApi import mock_all_gitlab_url
 
 app_name = 'groups'
 urlpatterns = [
@@ -28,7 +26,3 @@ urlpatterns = [
 
     # path('delete/<int:group_id>/', views.delete_group, name='delete_group'),
 ]
-
-if settings.MOCK_ALL_GITLAB_URL:
-    for urlpattern in urlpatterns:
-        urlpattern.callback = mock_all_gitlab_url(urlpattern.callback)

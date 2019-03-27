@@ -29,6 +29,11 @@ It will install all necessary python libraries
 make setup/dev
 ```  
 
+Test it  
+```
+make test/dev
+```  
+
 ## Celery  
 [How to use it](https://simpleisbetterthancomplex.com/tutorial/2017/08/20/how-to-use-celery-with-django.html "Article")  
 [Supervisor](https://medium.com/@channeng/celery-scheduler-part-2-managing-celery-with-supervisor-2a0c6e7f7a6e "Article")  

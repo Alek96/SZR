@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 
 from core.tests.test_view import SimpleUrlsTestsCases
 from core.tests.test_view import LoginMethods
-from GitLabApi import mock_all_gitlab_url
 from GitLabApi import objects
 from groups.tests.test_forms import *
 
@@ -21,7 +20,6 @@ class InitSidebarPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -35,7 +33,6 @@ class IndexPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'index'
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -50,7 +47,6 @@ class GroupDetailPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -65,7 +61,6 @@ class GroupMembersPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -80,7 +75,6 @@ class AjaxLoadSubgroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -99,7 +93,6 @@ class AjaxLoadSubgroupAndProjectsPageTest(GitlabWrapperAppNameCase.GitlabWrapper
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
@@ -117,21 +110,18 @@ class NewGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'new_group'
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_get(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_post_not_valid_data(self):
         response = self.client.post(self.get_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_post_valid_data(self):
         response = self.client.post(self.get_url(), GroupFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
@@ -143,21 +133,18 @@ class NewSubgroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_get(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_post_not_valid_data(self):
         response = self.client.post(self.get_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_post_valid_data(self):
         response = self.client.post(self.get_url(), GroupFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
@@ -169,21 +156,18 @@ class NewGroupMemberPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_get(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_post_not_valid_data(self):
         response = self.client.post(self.get_url())
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'groups/form_template.html')
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_post_valid_data(self):
         response = self.client.post(self.get_url(), GroupMemberFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
@@ -195,7 +179,6 @@ class GroupTasksPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     args = {'group_id': '1'}
 
     @LoginMethods.login_wrapper
-    @mock_all_gitlab_url
     def test_page_found(self):
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 200)

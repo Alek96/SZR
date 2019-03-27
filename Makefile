@@ -21,7 +21,11 @@ all:
 	@echo "Hello $(LOGNAME)! Welcome to django-project-skeleton"
 	@echo ""
 	@echo "  help         Prints this message"
+	@echo "  run          Runs server"
 	@echo "  run/dev      Runs server with development settings"
+	@echo "  run/frontend_dev"
+	@echo "               Runs server with frontend development settings"
+	@echo "                 (without setting GitLab)"
 	@echo "  clean        Removes all temporary files"
 	@echo "  coverage     Runs the tests and shows code coverage"
 	@echo "  flake8       Runs flake8 to check for PEP8 compliance"
@@ -31,12 +35,14 @@ all:
 	@echo "                 collecting static assets"
 	@echo "  refresh/dev  Refreshes with development settings"
 	@echo "  refresh/prod Refreshes with production settings"
-	@echo "  install      Installing necessary modules"
-	@echo "  install/com  Installing common necessary modules"
-	@echo "  install/dev  Installing development necessary modules"
+	@echo "  install      Installs necessary modules"
+	@echo "  install/com  Installs common necessary modules"
+	@echo "  install/dev  Installs development necessary modules"
 	@echo "  setup/dev    Sets up a development environment by installing"
 	@echo "                 necessary apps, running migrations and creating"
 	@echo "                 a superuser (django::django)"
+	@echo "  setup/frontend_dev"
+	@echo "               Runs setup/dev and configures django user"
 	@echo "  update/dev   Shortcut for setup and refresh"
 	@echo "  test [module_name=module_name]"
 	@echo "               Runs tests"
@@ -55,16 +61,16 @@ run: ensure_virtual_env
 
 
 # Runs server with development settings
-run/prod: ensure_virtual_env
+run/prod:
 	$(MAKE) run DJANGO_TEST_SETTINGS_FILE=production
 
 # Runs server with development settings
-run/dev: ensure_virtual_env
+run/dev:
 	$(MAKE) run DJANGO_TEST_SETTINGS_FILE=development
 
 
 # Runs server with frontend development settings
-run/frontend_dev: ensure_virtual_env
+run/frontend_dev:
 	$(MAKE) run DJANGO_TEST_SETTINGS_FILE=frontend_dev
 
 
@@ -133,24 +139,29 @@ install/django: ensure_virtual_env
 	@pip install 'Django>=2.0'
 
 # install required dependencies
-install: ensure_virtual_env install/django
+install: install/django
 	@pip install pip --upgrade
 	@pip install $(REQUIREMENTS_POSTFIX)
 
 # install common dependencies
-install/com: ensure_virtual_env
+install/com:
 	$(MAKE) install REQUIREMENTS_FILE=common
 
 # install development dependencies
-install/dev: ensure_virtual_env
+install/dev:
 	$(MAKE) install REQUIREMENTS_FILE=development
 
 
 # sets up the development environment by installing required dependencies,
 #	migrates the apps and creates a dummy user (django::django)
-setup/dev: ensure_virtual_env install/dev
+setup/dev: install/dev
 	$(MAKE) migrate DJANGO_TEST_SETTINGS_FILE=development
-	@echo "from django.contrib.auth.models import User; User.objects.filter(email='admin@example.com').delete(); User.objects.create_superuser(username='django', email='admin@example.com', password='django')" | python manage.py shell
+	@cat scripts/setup_development_env.py | python manage.py shell
+
+# sets up the frontend development environment by installing required dependencies,
+#	migrates the apps and creates a dummy user (django::django) and connecting him to GitLabUser
+setup/frontend_dev: setup/dev
+	@cat scripts/setup_frontend_dev_env.py | python manage.py shell
 
 
 # refreshes the project by migrating and collecting static assets
