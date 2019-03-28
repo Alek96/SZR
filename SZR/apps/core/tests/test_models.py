@@ -65,28 +65,47 @@ class GitlabUserModelUnitTests(unittest.TestCase, GitlabUserModelMethod):
         self.assertEqual(user.get_access_token(), access_token)
 
 
+class AbstractTaskStatus(TestCase):
+    def test_default_values(self):
+        task_status = FakeTaskStatus()
+        self.assertEqual(task_status.status, task_status.READY)
+
+    def test_is_started(self):
+        self.assertFalse(FakeTaskStatus(status=FakeTaskStatus.WAITING).is_started())
+        self.assertFalse(FakeTaskStatus(status=FakeTaskStatus.READY).is_started())
+        self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.RUNNING).is_started())
+        self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.SUCCEED).is_started())
+        self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.FAILED).is_started())
+
+    def test_is_finished(self):
+        self.assertFalse(FakeTaskStatus(status=FakeTaskStatus.WAITING).is_finished())
+        self.assertFalse(FakeTaskStatus(status=FakeTaskStatus.READY).is_finished())
+        self.assertFalse(FakeTaskStatus(status=FakeTaskStatus.RUNNING).is_finished())
+        self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.SUCCEED).is_finished())
+        self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.FAILED).is_finished())
+
+
 class AbstractTaskGroupTests(TestCase):
     def create_task_group(self, **kwargs):
         return FakeTaskGroup.objects.create(**kwargs)
 
     def test_default_values(self):
         task_group = self.create_task_group()
-        self.assertEqual(task_group.status, task_group.CREATED)
         self.assertEqual(task_group.tasks_number, 0)
         self.assertEqual(task_group.finished_tasks_number, 0)
         self.assertEqual(task_group.failed_task_number, 0)
 
-    def test_status_created(self):
+    def test_status_ready(self):
         task_group = self.create_task_group(tasks_number=1)
-        self.assertEqual(task_group.status, task_group.CREATED)
+        self.assertEqual(task_group.status, task_group.READY)
 
     def test_status_running(self):
         task_group = self.create_task_group(tasks_number=2, finished_tasks_number=1)
         self.assertEqual(task_group.status, task_group.RUNNING)
 
-    def test_status_completed(self):
+    def test_status_succeed(self):
         task_group = self.create_task_group(tasks_number=1, finished_tasks_number=1)
-        self.assertEqual(task_group.status, task_group.COMPLETED)
+        self.assertEqual(task_group.status, task_group.SUCCEED)
 
     def test_status_finished(self):
         task_group = self.create_task_group(tasks_number=1, finished_tasks_number=1, failed_task_number=1)
@@ -97,7 +116,7 @@ class AbstractTaskGroupTests(TestCase):
         self.assertEqual(task_group.tasks_number, 0)
         task_group.increment_task_number()
         task_group.save()
-        self.assertEqual(task_group.status, task_group.CREATED)
+        self.assertEqual(task_group.status, task_group.READY)
         self.assertEqual(task_group.tasks_number, 1)
 
     def test_increment_task_number_after_completed(self):
@@ -112,7 +131,7 @@ class AbstractTaskGroupTests(TestCase):
     @freeze_time("2019-01-01")
     def test_increment_finished_tasks_number(self):
         task_group = self.create_task_group(tasks_number=2)
-        task_group.increment_finished_tasks_number(task_group.COMPLETED)
+        task_group.increment_finished_tasks_number(task_group.SUCCEED)
         task_group.save()
         self.assertEqual(task_group.finished_tasks_number, 1)
         self.assertEqual(task_group.status, task_group.RUNNING)
@@ -121,10 +140,10 @@ class AbstractTaskGroupTests(TestCase):
     @freeze_time("2019-01-01")
     def test_increment_finished_tasks_number_with_status_completed(self):
         task_group = self.create_task_group(tasks_number=1)
-        task_group.increment_finished_tasks_number(task_group.COMPLETED)
+        task_group.increment_finished_tasks_number(task_group.SUCCEED)
         task_group.save()
         self.assertEqual(task_group.finished_tasks_number, 1)
-        self.assertEqual(task_group.status, task_group.COMPLETED)
+        self.assertEqual(task_group.status, task_group.SUCCEED)
         self.assertEqual(task_group.finished_date, timezone.now())
 
     @freeze_time("2019-01-01")
@@ -168,11 +187,18 @@ class AbstractTaskTests(TestCase):
             **kwargs
         )
 
-    def test_after_created_celery_task_is_created(self):
+    def test_after_creating_task_group_is_updated(self):
         task = self.create_task()
         # task group
         self.assertEqual(task.task_group.tasks_number, 1)
         self.assertEqual(task.execute_date, task.task_group.execute_date)
+
+    def test_after_creating_with_status_waiting_celery_task_is_not_created(self):
+        task = self.create_task(status=FakeTask.WAITING)
+        self.assertEqual(task.celery_task, None)
+
+    def test_after_creating_celery_task_is_created(self):
+        task = self.create_task()
         # celery task
         self.assertNotEqual(task.celery_task, None)
         self.assertIn("{}-{}".format(task.__class__.__name__, task.id), str(task.celery_task))
@@ -183,19 +209,60 @@ class AbstractTaskTests(TestCase):
         self.assertEqual(task.celery_task.one_off, True)
         self.assertEqual(task.celery_task.start_time, task.execute_date)
 
-    def test_after_save_second_celery_task_is_not_created(self):
+    def test_after_saving_second_celery_task_is_not_created(self):
         task = self.create_task()
         celery_task = task.celery_task
         task.save()
         self.assertEqual(task.celery_task, celery_task)
 
-    def test_after_finished_second_celery_task_is_not_created(self):
+    def _test_after_starting_celery_task_is_deleted(self, status):
         task = self.create_task()
-        task.celery_task.delete()
-        task.celery_task = None
-        task.status = task.COMPLETED
+        task.status = status
         task.save()
         self.assertEqual(task.celery_task, None)
+
+    def test_after_starting_celery_task_is_deleted_with_status_RUNNING(self):
+        self._test_after_starting_celery_task_is_deleted(FakeTask.RUNNING)
+
+    def test_after_starting_celery_task_is_deleted_with_status_SUCCEED(self):
+        self._test_after_starting_celery_task_is_deleted(FakeTask.SUCCEED)
+
+    def test_after_starting_celery_task_is_deleted_with_status_FAILED(self):
+        self._test_after_starting_celery_task_is_deleted(FakeTask.FAILED)
+
+    def _test_after_finishing_task_group_is_updated(self, status):
+        task = self.create_task()
+        task.status = status
+        task.save()
+        task.refresh_from_db()
+        self.assertEqual(task.task_group.finished_tasks_number, 1)
+
+    def test_after_finishing_task_group_is_updated_with_status_succeed(self):
+        self._test_after_finishing_task_group_is_updated(FakeTask.SUCCEED)
+
+    def test_after_finishing_task_group_is_updated_with_status_failed(self):
+        self._test_after_finishing_task_group_is_updated(FakeTask.FAILED)
+
+    def _test_can_update_execute_date(self, status):
+        task = self.create_task(status=status)
+        old_date_ = task.execute_date
+
+        with freeze_time("2019-01-02"):
+            new_date = timezone.now()
+            task.execute_date = new_date
+            task.save()
+
+        task.refresh_from_db()
+        self.assertNotEqual(task.execute_date, old_date_)
+        self.assertEqual(task.execute_date, new_date)
+
+    @freeze_time("2019-01-01")
+    def test_can_update_execute_date_with_status_ready(self):
+        self._test_can_update_execute_date(FakeTask.READY)
+
+    @freeze_time("2019-01-01")
+    def test_can_update_execute_date_with_status_waiting(self):
+        self._test_can_update_execute_date(FakeTask.WAITING)
 
     @freeze_time("2019-01-01")
     def test_after_updating_execute_date_celery_task_is_also_updated(self):
@@ -208,20 +275,29 @@ class AbstractTaskTests(TestCase):
             task.save()
 
         task.refresh_from_db()
-        self.assertNotEqual(task.execute_date, old_date_)
-        self.assertEqual(task.execute_date, new_date)
+        self.assertNotEqual(task.celery_task.start_time, old_date_)
         self.assertEqual(task.celery_task.start_time, new_date)
 
-    @freeze_time("2019-01-01")
-    def test_updating_execute_date_after_running_raise_error(self):
+    def _test_updating_execute_date_after_running_raise_error(self, status):
         task = self.create_task()
-        task.status = task.RUNNING
+        task.status = status
         task.save()
 
-        with freeze_time("2019-01-02"):
-            with self.assertRaises(ValidationError):
-                task.execute_date = timezone.now()
-                task.save()
+        with self.assertRaises(ValidationError):
+            task.execute_date = timezone.now()
+            task.save()
+
+    @freeze_time("2019-01-01")
+    def test_updating_execute_date_after_running_raise_error_with_status_running(self):
+        self._test_updating_execute_date_after_running_raise_error(FakeTask.RUNNING)
+
+    @freeze_time("2019-01-01")
+    def test_updating_execute_date_after_running_raise_error_with_status_succeed(self):
+        self._test_updating_execute_date_after_running_raise_error(FakeTask.SUCCEED)
+
+    @freeze_time("2019-01-01")
+    def test_updating_execute_date_after_running_raise_error_with_status_failed(self):
+        self._test_updating_execute_date_after_running_raise_error(FakeTask.FAILED)
 
     @freeze_time("2019-01-01")
     def test_updating_execute_date_on_task_group_level(self):

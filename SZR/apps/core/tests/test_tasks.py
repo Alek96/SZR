@@ -38,11 +38,9 @@ class BaseTaskTests(TestCase):
 
         self.task_model.refresh_from_db()
         self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
-        self.assertEqual(self.task_model.celery_task, None)
         self.assertEqual(self.task_model.error_msg, "Task must define the _run method.")
         self.assertEqual(self.task_model.status, self.task_model.FAILED)
         self.assertEqual(self.task_model.finished_date, timezone.now())
-        self.assertEqual(self.task_model.task_group.finished_tasks_number, 1)
 
     @freeze_time("2019-01-01")
     def test_run_failed(self):
@@ -53,11 +51,9 @@ class BaseTaskTests(TestCase):
 
         self.task_model.refresh_from_db()
         self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
-        self.assertEqual(self.task_model.celery_task, None)
         self.assertEqual(self.task_model.error_msg, "Error msg")
         self.assertEqual(self.task_model.status, self.task_model.FAILED)
         self.assertEqual(self.task_model.finished_date, timezone.now())
-        self.assertEqual(self.task_model.task_group.finished_tasks_number, 1)
 
     @freeze_time("2019-01-01")
     def test_run_correctly(self):
@@ -65,8 +61,6 @@ class BaseTaskTests(TestCase):
 
         self.task_model.refresh_from_db()
         self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
-        self.assertEqual(self.task_model.celery_task, None)
         self.assertEqual(self.task_model.error_msg, None)
-        self.assertEqual(self.task_model.status, self.task_model.COMPLETED)
+        self.assertEqual(self.task_model.status, self.task_model.SUCCEED)
         self.assertEqual(self.task_model.finished_date, timezone.now())
-        self.assertEqual(self.task_model.task_group.finished_tasks_number, 1)

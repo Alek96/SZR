@@ -15,10 +15,9 @@ class BaseTask(Task):
 
     def run(self, task_id, **kwargs):
         self._set_up(task_id)
-        self._set_up_run()
         try:
             self._run(**kwargs)
-            self._task.status = self._task.COMPLETED
+            self._task.status = self._task.SUCCEED
         except Exception as err:
             self._task.error_msg = str(err)
             self._task.status = self._task.FAILED
@@ -29,19 +28,12 @@ class BaseTask(Task):
 
     def _set_up(self, task_id):
         self._task = self._get_object_from_db(task_id)
+        self._task.status = self._task.RUNNING
+        self._task.save()
 
     def _get_object_from_db(self, task_id):
         return self._task_model.objects.get(id=task_id)
 
-    def _set_up_run(self):
-        self._task.celery_task.delete()
-        self._task.celery_task = None
-        self._task.status = self._task.RUNNING
-        self._task.save()
-
     def _finnish(self):
-        self._task.task_group.increment_finished_tasks_number(self._task.status)
-        self._task.task_group.save()
-
         self._task.finished_date = timezone.now()
         self._task.save()

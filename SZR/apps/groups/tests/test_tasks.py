@@ -56,4 +56,4 @@ class AddGroupMemberTaskTests(TestCase, GitlabUserModelMethod):
 
         self.task_model.refresh_from_db()
         self.assertNotEqual(self.task_model.new_user, None)
-        self.assertEqual(self.task_model.status, self.task_model.COMPLETED)
+        self.assertEqual(self.task_model.status, self.task_model.SUCCEED)

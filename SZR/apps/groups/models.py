@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from model_utils import FieldTracker
 
 from core.models import AbstractGitlabModel
 from core.models import GitlabUser
@@ -38,15 +37,13 @@ class AbstractAccessLevel(models.Model):
 
 class AddGroupMemberTaskGroup(AbstractTaskGroup):
     gitlab_group = models.ForeignKey(GitlabGroup, on_delete=models.CASCADE)
-    tracker = FieldTracker()  # We need specified this field every time after inheritance
 
 
 class AddGroupMemberTask(AbstractTask, AbstractAccessLevel):
+    _task_group_model = AddGroupMemberTaskGroup
+
     username = models.CharField(max_length=100)
     new_user = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, null=True, blank=True)
-
-    task_group = models.ForeignKey(AddGroupMemberTaskGroup, on_delete=models.CASCADE, related_name='tasks_set')
-    tracker = FieldTracker()  # We need specified this field every time after inheritance
 
     def _get_task_path(self):
         return 'groups.tasks.AddGroupMemberTask'
