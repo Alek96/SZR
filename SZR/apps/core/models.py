@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.db.models import F, Value, When, Case
 from django.utils import timezone
-from django.contrib.auth.models import User as Auth_user
+from django.contrib.auth.models import User
 from social_django.models import UserSocialAuth
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from model_utils import FieldTracker
@@ -20,18 +20,18 @@ class AbstractGitlabModel(models.Model):
 
 
 class GitlabUser(AbstractGitlabModel):
-    auth_user = models.OneToOneField(Auth_user, on_delete=models.SET_NULL, null=True, blank=True)
-    social_auth = models.OneToOneField(UserSocialAuth, on_delete=models.SET_NULL, null=True, blank=True,
-                                       related_name='SZR_user')
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
+    user_social_auth = models.OneToOneField(UserSocialAuth, on_delete=models.SET_NULL, null=True, blank=True,
+                                            related_name='SZR_user')
 
     def has_access_token(self):
-        if self.social_auth:
-            return 'access_token' in self.social_auth.extra_data
+        if self.user_social_auth:
+            return 'access_token' in self.user_social_auth.extra_data
         return False
 
     def get_access_token(self):
         if self.has_access_token():
-            return self.social_auth.extra_data['access_token']
+            return self.user_social_auth.extra_data['access_token']
         raise RuntimeError("User {} does not have access token".format(self))
 
     def __str__(self):
@@ -213,7 +213,7 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
 
     def _create_task(self):
         return PeriodicTask.objects.create(
-            interval=self._create_or_get_interval(),
+            interval=self._get_or_create_interval(),
             name='task-{}-{}'.format(self.__class__.__name__, self.id),
             task=self._get_task_path(),
             kwargs=json.dumps({'task_id': self.id}),
@@ -221,7 +221,7 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
             start_time=self.execute_date
         )
 
-    def _create_or_get_interval(self):
+    def _get_or_create_interval(self):
         schedule, _ = IntervalSchedule.objects.get_or_create(
             every=10,
             period=IntervalSchedule.SECONDS

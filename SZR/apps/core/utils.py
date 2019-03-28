@@ -1,9 +1,10 @@
+import functools
 import sys
 from contextlib import contextmanager
 from io import StringIO
+
 from django.db import connection, reset_queries
 from django.template import Template, Context
-import functools
 
 
 @contextmanager

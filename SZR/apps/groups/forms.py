@@ -7,6 +7,7 @@ from GitLabApi.exceptions import *
 from core.exceptions import WrongFormError
 from groups import models
 from core.models import GitlabUser
+from groups import tasks
 
 
 class FormMethods(forms.Form):
@@ -63,7 +64,6 @@ class GroupMemberGroupForm(forms.ModelForm, FormMethods):
         model = models.AddGroupMemberTaskGroup
         fields = ['name', 'execute_date']
         widgets = {
-            # 'execute_date': forms.SplitDateTimeWidget,
             'execute_date': widgets.AdminSplitDateTime,
         }
         field_classes = {
@@ -85,24 +85,20 @@ class GroupMemberForm(forms.ModelForm, FormMethods):
         fields = ['username', 'access_level']
 
     def save_in_gitlab(self, user_id, group_id):
-        if self.is_valid():
-            data = dict(self.cleaned_data)
-            try:
-                gitlab_api = GitLabApi(user_id)
-                new_user_id = gitlab_api.users.get(username=data['username']).id
-                gitlab_api.groups.get(group_id).members.create({
-                    'user_id': new_user_id,
-                    'access_level': data['access_level']
-                })
-                return
-            except GitlabOperationError as error:
-                self.add_error_dict(error.get_error_dict())
-        raise WrongFormError(self.errors.as_data())
+        if not self.is_valid():
+            raise WrongFormError(self.errors.as_data())
+
+        data = dict(self.cleaned_data)
+        try:
+            tasks.add_or_update_group_member(user_id=user_id, group_id=group_id, **data)
+        except GitlabOperationError as error:
+            self.add_error_dict(error.get_error_dict())
+            raise WrongFormError(self.errors.as_data())
 
     def save_in_task(self, user_id, task_group_id):
         if self.is_valid():
             task = self.save(commit=False)
-            task.owner = GitlabUser.objects.get(auth_user_id=user_id)
+            task.owner = GitlabUser.objects.get(user_id=user_id)
             task.task_group = models.AddGroupMemberTaskGroup.objects.get(id=task_group_id)
             task.save()
         else:

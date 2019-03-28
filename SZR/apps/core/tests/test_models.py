@@ -13,25 +13,25 @@ class GitlabUserModelMethod:
 
     @staticmethod
     def create_gitlab_user(gitlab_id=42, save=True, **kwargs):
-        user = GitlabUser(gitlab_id=gitlab_id, **kwargs)
+        gitlab_user = GitlabUser(gitlab_id=gitlab_id, **kwargs)
         if save:
-            user.save()
-        return user
+            gitlab_user.save()
+        return gitlab_user
 
     @staticmethod
-    def create_auth_user_and_social_auth(username='userTest', password='password', email='email@example.com',
+    def create_user_and_user_social_auth(username='userTest', password='password', email='email@example.com',
                                          first_name='name', last_name='', provider='gitlab', uid=500, extra_data=None):
 
         if not extra_data:
             extra_data = {"auth_time": 0, "id": uid, "expires": None, "refresh_token": "aaa", "access_token": "bbb",
                           "token_type": "bearer"}
 
-        auth_user = Auth_user.objects.create(username=username, email=email, password=password,
-                                             first_name=first_name, last_name=last_name)
-        social_auth = UserSocialAuth.objects.create(provider=provider, uid=uid, user_id=auth_user.id,
-                                                    extra_data=extra_data)
+        user = User.objects.create(username=username, email=email, password=password,
+                                   first_name=first_name, last_name=last_name)
+        user_social_auth = UserSocialAuth.objects.create(provider=provider, uid=uid, user_id=user.id,
+                                                         extra_data=extra_data)
 
-        return auth_user, social_auth
+        return user, user_social_auth
 
 
 class GitlabUserModelUnitTests(unittest.TestCase, GitlabUserModelMethod):
@@ -51,7 +51,7 @@ class GitlabUserModelUnitTests(unittest.TestCase, GitlabUserModelMethod):
 
     def test_social_auth_does_not_has_access_token(self):
         user = self.create_gitlab_user(save=False)
-        user.social_auth = UserSocialAuth()
+        user.user_social_auth = UserSocialAuth()
         self.assertFalse(user.has_access_token())
         with self.assertRaises(RuntimeError):
             self.assertEqual(user.get_access_token(), None)
@@ -59,8 +59,8 @@ class GitlabUserModelUnitTests(unittest.TestCase, GitlabUserModelMethod):
     def test_social_auth_has_access_token(self):
         access_token = 'token'
         user = self.create_gitlab_user(save=False)
-        user.social_auth = UserSocialAuth()
-        user.social_auth.extra_data['access_token'] = access_token
+        user.user_social_auth = UserSocialAuth()
+        user.user_social_auth.extra_data['access_token'] = access_token
         self.assertTrue(user.has_access_token())
         self.assertEqual(user.get_access_token(), access_token)
 
@@ -204,7 +204,7 @@ class AbstractTaskTests(TestCase):
         self.assertIn("{}-{}".format(task.__class__.__name__, task.id), str(task.celery_task))
         self.assertEqual(task.celery_task.task, task._get_task_path())
         self.assertEqual(task.celery_task.kwargs, json.dumps({"task_id": task.id}))
-        self.assertEqual(task.celery_task.interval, task._create_or_get_interval())
+        self.assertEqual(task.celery_task.interval, task._get_or_create_interval())
         self.assertEqual(task.celery_task.enabled, True)
         self.assertEqual(task.celery_task.one_off, True)
         self.assertEqual(task.celery_task.start_time, task.execute_date)

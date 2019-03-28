@@ -1,3 +1,10 @@
+{% if form.errors %}
+    {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+    {% endfor %}
+{% endif %}
 {% for field in form %}
     <div class="form-group d-block mx-auto">
         <div class="offset-sm-2 col-sm-10">

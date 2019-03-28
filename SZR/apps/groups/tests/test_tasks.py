@@ -5,15 +5,55 @@ from httmock import HTTMock
 import json
 
 from core.models import GitlabUser
-from core.tests.test_models import GitlabUserModelMethod
+from core.tests.test_view import LoginMethods
 from groups import models
-from groups.tasks import AddGroupMemberTask
 from GitLabApi import mock_all_gitlab_url
+from groups.tasks import *
+from GitLabApi.tests.test_gitlab_api import *
 
 
-class AddGroupMemberTaskTests(TestCase, GitlabUserModelMethod):
+class AddOrUpdateGroupMemberTests(LoginMethods):
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_update_user(self):
+        with HTTMock(mock_all_urls_and_raise_error):
+            with HTTMock(TestGitLabGroupsApi().get_mock_get_url()):
+                with HTTMock(TestGitLabUsersApi().get_mock_list_url()):
+                    with HTTMock(TestGitLabGroupMembersApi().get_mock_get_url()):
+                        with HTTMock(TestGitLabGroupMemberObjApi().get_mock_save_url(args={'access_level': 10})):
+                            self.assertTrue(add_or_update_group_member(
+                                user_id=self.user.id,
+                                group_id=1,
+                                username='name',
+                                access_level=10
+                            ))
+
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_create_user(self):
+        args_dict = {
+            'user_id': self.user.id,
+            'access_level': 10,
+        }
+
+        with HTTMock(mock_all_urls_and_raise_error):
+            with HTTMock(TestGitLabGroupsApi().get_mock_get_url()):
+                with HTTMock(TestGitLabUsersApi().get_mock_list_url()):
+                    with HTTMock(TestGitLabGroupMembersApi().get_mock_get_url(raise_error=GitlabGetError())):
+                        with HTTMock(TestGitLabGroupMembersApi().get_mock_create_url(args=args_dict)):
+                            self.assertTrue(add_or_update_group_member(
+                                user_id=self.user.id,
+                                group_id=1,
+                                username='name',
+                                access_level=10
+                            ))
+
+
+class AddGroupMemberTaskTests(LoginMethods):
+
+    @LoginMethods.create_user_wrapper
     def setUp(self):
-        self.gitlab_user = self.create_gitlab_user()
+        self.gitlab_user = GitlabUser.objects.get(user_social_auth=self.user_social_auth)
         self.gitlab_group = models.GitlabGroup.objects.create(gitlab_id=1)
         self.task_group_model = models.AddGroupMemberTaskGroup.objects.create(
             gitlab_group=self.gitlab_group
@@ -23,10 +63,6 @@ class AddGroupMemberTaskTests(TestCase, GitlabUserModelMethod):
             task_group=self.task_group_model,
             username='username',
         )
-
-    def create_gitlab_user(self, **kwargs):
-        auth_user, social_auth = self.create_auth_user_and_social_auth()
-        return GitlabUser.objects.get(social_auth=social_auth)
 
     def get_run_args(self):
         return json.loads(self.task_model.celery_task.kwargs)
@@ -55,5 +91,6 @@ class AddGroupMemberTaskTests(TestCase, GitlabUserModelMethod):
             AddGroupMemberTask().run(**self.get_run_args())
 
         self.task_model.refresh_from_db()
+        self.assertEqual(self.task_model.error_msg, None)
         self.assertNotEqual(self.task_model.new_user, None)
         self.assertEqual(self.task_model.status, self.task_model.SUCCEED)

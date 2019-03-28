@@ -1,6 +1,6 @@
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
-from django.contrib.auth.models import User as Auth_user
+from django.contrib.auth.models import User
 from social_django.models import UserSocialAuth
 
 from core.models import GitlabUser
@@ -14,14 +14,14 @@ def create_gitlab_user(sender, instance, **kwargs):
         )
 
     def set_social_auth_attributes(gitlab_user):
-        gitlab_user.auth_user = auth_user
-        gitlab_user.social_auth = instance
+        gitlab_user.user = user
+        gitlab_user.user_social_auth = instance
         gitlab_user.save()
 
     if instance.provider != 'gitlab':
         return
 
-    auth_user = Auth_user.objects.get(id=instance.user_id)
+    user = User.objects.get(id=instance.user_id)
 
     try:
         gitlab_user = GitlabUser.objects.get(gitlab_id=instance.uid)

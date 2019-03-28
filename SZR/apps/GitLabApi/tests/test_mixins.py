@@ -62,6 +62,18 @@ class TestMixinMethods(unittest.TestCase):
         self.assertEqual(obj.foo, 'bar')
         self.assertEqual(mgr._rest_manager.args, (42,))
 
+    def test_get_mixin_err(self):
+        class M(GetMixin, FakeManager):
+            pass
+
+        class FakeGet(FakeGitlab):
+            def get(self, *args, **kwargs):
+                raise gl_exceptions.GitlabGetError('error')
+
+        with self.assertRaises(GitlabGetError) as error:
+            M(FakeGet()).get(42)
+        self.assertIn('error', str(error.exception))
+
     def test_list_mixin(self):
         class M(ListMixin, FakeManager):
             pass
@@ -75,6 +87,18 @@ class TestMixinMethods(unittest.TestCase):
         self.assertIsInstance(obj_list, list)
         self.assertIsInstance(obj_list[0], FakeObject)
         self.assertEqual(len(obj_list), 2)
+
+    def test_list_mixin_err(self):
+        class M(ListMixin, FakeManager):
+            pass
+
+        class FakeList(FakeGitlab):
+            def list(self, **kwargs):
+                raise gl_exceptions.GitlabListError('error')
+
+        with self.assertRaises(GitlabListError) as error:
+            M(FakeList()).list()
+        self.assertIn('error', str(error.exception))
 
     def test_create_mixin(self):
         class M(CreateMixin, FakeManager):
@@ -113,6 +137,18 @@ class TestMixinMethods(unittest.TestCase):
         mgr = M(FakeUpdate())
         mgr.update(42, {'foo': 'bar'})
         self.assertEqual(mgr._rest_manager.args, (42, {'foo': 'bar'}))
+
+    def test_update_mixin_err(self):
+        class M(UpdateMixin, FakeManager):
+            pass
+
+        class FakeUpdate(FakeGitlab):
+            def update(self, *args, **kwargs):
+                raise gl_exceptions.GitlabUpdateError('error')
+
+        with self.assertRaises(GitlabUpdateError) as error:
+            M(FakeUpdate()).update(42, {'foo': 'bar'})
+        self.assertIn('error', str(error.exception))
 
     @unittest.skip
     def test_delete_mixin(self):

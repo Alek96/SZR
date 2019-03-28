@@ -38,7 +38,7 @@ class LoginMethods(TestCase, UserCredentials):
 
     def create_user_to_login(self):
         self.user = User.objects.create_user(**self.user_credentials)
-        self.user_social = UserSocialAuth.objects.create(**self.user_social_auth_credentials)
+        self.user_social_auth = UserSocialAuth.objects.create(**self.user_social_auth_credentials)
 
     def create_user_wrapper(func):
         @functools.wraps(func)

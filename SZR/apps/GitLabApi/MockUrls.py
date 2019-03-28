@@ -243,7 +243,7 @@ class MockUsersUrls(MockUrlCRUD):
 
 
 @all_requests
-def mock_all_urls(url, request):
+def mock_all_urls_and_raise_error(url, request):
     raise exceptions.NoMockedUrlError("Url '{}' is not mocked".format(url))
 
 
@@ -256,7 +256,7 @@ class MockGitLabUrl(MockUrlBase):
         res.extend(self._mock_groups_url.get_all_mock_urls(**kwargs))
         res.extend(self._mock_users_url.get_all_mock_urls(**kwargs))
 
-        res.append(mock_all_urls)
+        res.append(mock_all_urls_and_raise_error)
         return res
 
 

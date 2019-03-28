@@ -16,18 +16,18 @@ import json
 class TestIntegrationGitLabApi(TestCase, GitlabUserModelMethod):
 
     def test_can_not_create_connection_if_access_token_is_not_provided(self):
-        auth_user, social_auth = self.create_auth_user_and_social_auth(extra_data={'id': 1})
+        auth_user, social_auth = self.create_user_and_user_social_auth(extra_data={'id': 1})
         with self.assertRaises(RuntimeError):
             GitLabApi(auth_user.id)
 
     def test_can_create_connection(self):
-        auth_user, social_auth = self.create_auth_user_and_social_auth()
-        user = GitlabUser.objects.get(social_auth=social_auth)
+        user, user_social_auth = self.create_user_and_user_social_auth()
+        gitlab_user = GitlabUser.objects.get(user_social_auth=user_social_auth)
 
-        gitlab_api = GitLabApi(auth_user.id)
+        gitlab_api = GitLabApi(user.id)
         self.assertIsInstance(gitlab_api._gitlab, gitlab.Gitlab)
         self.assertEqual(gitlab_api._gitlab.url, settings.SOCIAL_AUTH_GITLAB_API_URL)
-        self.assertEqual(gitlab_api._gitlab.oauth_token, user.get_access_token())
+        self.assertEqual(gitlab_api._gitlab.oauth_token, gitlab_user.get_access_token())
 
 
 class GitLabApiTestsCases:

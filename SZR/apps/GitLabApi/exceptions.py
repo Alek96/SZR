@@ -55,6 +55,14 @@ class GitlabCreateError(GitlabOperationError):
     pass
 
 
+class GitlabUpdateError(GitlabOperationError):
+    pass
+
+
+class GitlabDeleteError(GitlabOperationError):
+    pass
+
+
 def on_error(expect_error, raise_error):
     def wrap(f):
         @functools.wraps(f)
