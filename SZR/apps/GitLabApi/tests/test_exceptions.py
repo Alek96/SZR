@@ -48,6 +48,12 @@ class GitlabErrorTests(unittest.TestCase):
         self.assertNotEqual(error.error_message, error_message)
         self.assertEqual(error.get_error_dict(), {'path': ['has already been taken']})
 
+    def test_get_error_dict_with_error_message_dict(self):
+        error_message = {"name": "error"}
+        error = GitlabError(error_message)
+        self.assertEqual(error.error_message, error_message)
+        self.assertEqual(error.get_error_dict(), error_message)
+
 
 class WrappersTests(unittest.TestCase):
     def test_on_error(self):

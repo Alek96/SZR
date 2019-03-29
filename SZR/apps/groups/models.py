@@ -36,6 +36,8 @@ class AbstractAccessLevel(models.Model):
 
 
 class AddGroupMemberTaskGroup(AbstractTaskGroup):
+    _parent_task = 'self'
+
     gitlab_group = models.ForeignKey(GitlabGroup, on_delete=models.CASCADE)
 
 

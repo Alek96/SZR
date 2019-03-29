@@ -28,6 +28,8 @@ class GitlabError(Exception):
         return dict_str
 
     def get_error_dict(self):
+        if isinstance(self.error_message, dict):
+            return self.error_message
         try:
             dict_str = self.error_message[self.error_message.index('{'):]
             return json.loads(dict_str)

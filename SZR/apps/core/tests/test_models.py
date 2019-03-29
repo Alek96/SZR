@@ -155,6 +155,51 @@ class AbstractTaskGroupTests(TestCase):
         self.assertEqual(task_group.status, task_group.FAILED)
         self.assertEqual(task_group.finished_date, timezone.now())
 
+    @freeze_time("2019-01-01")
+    def test_changing_execute_date_change_tasks_set_execute_date(self):
+        task_group = self.create_task_group()
+        task_1 = task_group.create_task()
+        task_2 = task_group.create_task()
+        task_2.status = task_2.RUNNING
+        task_2.save()
+
+        with freeze_time("2019-01-02"):
+            task_group.execute_date = timezone.now()
+            task_group.save()
+
+        task_1.refresh_from_db()
+        task_2.refresh_from_db()
+        self.assertEqual(task_group.execute_date, task_1.execute_date)
+        self.assertNotEqual(task_group.execute_date, task_2.execute_date)
+
+    def test_cannot_change_status_to_waiting_after_creating(self):
+        task_group = self.create_task_group()
+        task_group.status = task_group.WAITING
+
+        with self.assertRaises(ValidationError):
+            task_group.save()
+
+    def test_creating_with_parent_task_witch_is_not_finished_sets_status_to_waiting(self):
+        task = self.create_task_group().create_task()
+        task_group = self.create_task_group(parent_task=task)
+        self.assertEqual(task_group.status, task_group.WAITING)
+
+    def test_changing_status_to_ready_change_tasks_set_status_to_ready_from_waiting(self):
+        task_group = self.create_task_group(status=FakeTaskGroup.WAITING)
+        self.assertEqual(task_group.status, task_group.WAITING)
+        task_1 = task_group.create_task()
+        task_2 = task_group.create_task()
+        self.assertEqual(task_1.status, task_1.WAITING)
+        self.assertEqual(task_2.status, task_2.WAITING)
+
+        task_group.status = task_group.READY
+        task_group.save()
+
+        task_1.refresh_from_db()
+        task_2.refresh_from_db()
+        self.assertEqual(task_1.status, task_1.READY)
+        self.assertEqual(task_2.status, task_2.READY)
+
 
 class AbstractTaskNotImplementedTests(TestCase):
     def setUp(self):
@@ -299,21 +344,29 @@ class AbstractTaskTests(TestCase):
     def test_updating_execute_date_after_running_raise_error_with_status_failed(self):
         self._test_updating_execute_date_after_running_raise_error(FakeTask.FAILED)
 
-    @freeze_time("2019-01-01")
-    def test_updating_execute_date_on_task_group_level(self):
-        task_1 = self.create_task()
-        task_2 = self.create_task()
-        task_2.status = task_2.RUNNING
-        task_2.save()
+    def test_creating_task_with_task_group_status_waiting_set_status_to_waiting(self):
+        self.task_group = FakeTaskGroup.objects.create(status=FakeTaskGroup.WAITING)
+        task = self.create_task()
+        self.assertEqual(task.status, task.WAITING)
 
-        with freeze_time("2019-01-02"):
-            self.task_group.execute_date = timezone.now()
-            self.task_group.save()
+    def _test_after_finishing_child_task_group_is_updated(self, status):
+        task = self.create_task()
+        task_group_1 = FakeTaskGroup.objects.create(parent_task=task)
+        task_group_2 = FakeTaskGroup.objects.create(parent_task=task)
+        task.refresh_from_db()
 
-        task_1.refresh_from_db()
-        task_2.refresh_from_db()
-        self.assertEqual(self.task_group.execute_date, task_1.execute_date)
-        self.assertNotEqual(self.task_group.execute_date, task_2.execute_date)
+        task.status = status
+        task.save()
+        task_group_1.refresh_from_db()
+        task_group_2.refresh_from_db()
+        self.assertEqual(task_group_1.status, task_group_1.READY)
+        self.assertEqual(task_group_2.status, task_group_2.READY)
+
+    def test_after_finishing_child_task_group_is_updated_with_status_succeed(self):
+        self._test_after_finishing_child_task_group_is_updated(FakeTask.SUCCEED)
+
+    def test_after_finishing_child_task_group_is_updated_with_status_failed(self):
+        self._test_after_finishing_child_task_group_is_updated(FakeTask.FAILED)
 
     def test_path_to_task(self):
         task = self.create_task()
