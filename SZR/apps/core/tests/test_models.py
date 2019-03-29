@@ -85,10 +85,28 @@ class AbstractTaskStatus(TestCase):
         self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.FAILED).is_finished())
 
 
-class AbstractTaskGroupTests(TestCase):
+class TaskGroupAndTaskMethods(TestCase):
+    def setUp(self):
+        self.task_group = self.create_task_group()
+
     def create_task_group(self, **kwargs):
         return FakeTaskGroup.objects.create(**kwargs)
 
+    def create_task(self, owner=None, task_group=None, **kwargs):
+        return FakeTask.objects.create(
+            owner=owner or GitlabUser.objects.create(),
+            task_group=task_group or getattr(self, 'task_group', self.create_task_group()),
+            **kwargs
+        )
+
+    def create_parent_task(self, **kwargs):
+        return self.create_task(
+            task_group=self.create_task_group(),
+            **kwargs
+        )
+
+
+class AbstractTaskGroupTests(TaskGroupAndTaskMethods):
     def test_default_values(self):
         task_group = self.create_task_group()
         self.assertEqual(task_group.tasks_number, 0)
@@ -158,8 +176,8 @@ class AbstractTaskGroupTests(TestCase):
     @freeze_time("2019-01-01")
     def test_changing_execute_date_change_tasks_set_execute_date(self):
         task_group = self.create_task_group()
-        task_1 = task_group.create_task()
-        task_2 = task_group.create_task()
+        task_1 = self.create_task(task_group=task_group)
+        task_2 = self.create_task(task_group=task_group)
         task_2.status = task_2.RUNNING
         task_2.save()
 
@@ -180,15 +198,14 @@ class AbstractTaskGroupTests(TestCase):
             task_group.save()
 
     def test_creating_with_parent_task_witch_is_not_finished_sets_status_to_waiting(self):
-        task = self.create_task_group().create_task()
-        task_group = self.create_task_group(parent_task=task)
+        task_group = self.create_task_group(parent_task=self.create_parent_task())
         self.assertEqual(task_group.status, task_group.WAITING)
 
     def test_changing_status_to_ready_change_tasks_set_status_to_ready_from_waiting(self):
         task_group = self.create_task_group(status=FakeTaskGroup.WAITING)
         self.assertEqual(task_group.status, task_group.WAITING)
-        task_1 = task_group.create_task()
-        task_2 = task_group.create_task()
+        task_1 = self.create_task(task_group=task_group)
+        task_2 = self.create_task(task_group=task_group)
         self.assertEqual(task_1.status, task_1.WAITING)
         self.assertEqual(task_2.status, task_2.WAITING)
 
@@ -219,19 +236,7 @@ class AbstractTaskNotImplementedTests(TestCase):
             self.create_task()
 
 
-class AbstractTaskTests(TestCase):
-    def setUp(self):
-        super().setUp()
-        self.gitlab_user = GitlabUser.objects.create()
-        self.task_group = FakeTaskGroup.objects.create()
-
-    def create_task(self, **kwargs):
-        return FakeTask.objects.create(
-            owner=self.gitlab_user,
-            task_group=self.task_group,
-            **kwargs
-        )
-
+class AbstractTaskTests(TaskGroupAndTaskMethods):
     def test_after_creating_task_group_is_updated(self):
         task = self.create_task()
         # task group
@@ -345,14 +350,14 @@ class AbstractTaskTests(TestCase):
         self._test_updating_execute_date_after_running_raise_error(FakeTask.FAILED)
 
     def test_creating_task_with_task_group_status_waiting_set_status_to_waiting(self):
-        self.task_group = FakeTaskGroup.objects.create(status=FakeTaskGroup.WAITING)
-        task = self.create_task()
+        task_group = self.create_task_group(status=FakeTaskGroup.WAITING)
+        task = self.create_task(task_group=task_group)
         self.assertEqual(task.status, task.WAITING)
 
-    def _test_after_finishing_child_task_group_is_updated(self, status):
-        task = self.create_task()
-        task_group_1 = FakeTaskGroup.objects.create(parent_task=task)
-        task_group_2 = FakeTaskGroup.objects.create(parent_task=task)
+    def _test_after_finishing_child_task_groups_are_updated(self, status):
+        task = self.create_parent_task()
+        task_group_1 = self.create_task_group(parent_task=task)
+        task_group_2 = self.create_task_group(parent_task=task)
         task.refresh_from_db()
 
         task.status = status
@@ -362,11 +367,11 @@ class AbstractTaskTests(TestCase):
         self.assertEqual(task_group_1.status, task_group_1.READY)
         self.assertEqual(task_group_2.status, task_group_2.READY)
 
-    def test_after_finishing_child_task_group_is_updated_with_status_succeed(self):
-        self._test_after_finishing_child_task_group_is_updated(FakeTask.SUCCEED)
+    def test_after_finishing_child_task_groups_are_updated_with_status_succeed(self):
+        self._test_after_finishing_child_task_groups_are_updated(FakeTask.SUCCEED)
 
     def test_after_finishing_child_task_group_is_updated_with_status_failed(self):
-        self._test_after_finishing_child_task_group_is_updated(FakeTask.FAILED)
+        self._test_after_finishing_child_task_groups_are_updated(FakeTask.FAILED)
 
     def test_path_to_task(self):
         task = self.create_task()
@@ -377,4 +382,6 @@ class AbstractTaskTests(TestCase):
         task = self.create_task()
         class_task = locate(task._get_task_path())
         args = json.loads(task.celery_task.kwargs)
-        class_task().delay(**args)
+        with mock.patch.object(class_task, '_run') as mock_run:
+            class_task().delay(**args)
+        mock_run.assert_called_once_with()

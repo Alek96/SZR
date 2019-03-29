@@ -6,13 +6,7 @@ class FakeTaskStatus(AbstractTaskStatus):
 
 
 class FakeTaskGroup(AbstractTaskGroup):
-    _parent_task = 'FakeTask'
-
-    def create_task(self, **kwargs):
-        return self.tasks_set.create(
-            owner=GitlabUser.objects.create(),
-            **kwargs
-        )
+    _parent_task_model = 'FakeTask'
 
 
 class FakeTask(AbstractTask):
@@ -23,7 +17,7 @@ class FakeTask(AbstractTask):
 
 
 class FakeRaiseTaskGroup(AbstractTaskGroup):
-    _parent_task = 'FakeRaiseTask'
+    _parent_task_model = 'FakeRaiseTask'
 
 
 class FakeRaiseTask(AbstractTask):

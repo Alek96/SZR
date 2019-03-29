@@ -92,7 +92,7 @@ def create_field_tracker(cls, name):
 
 
 class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
-    _parent_task = None
+    _parent_task_model = None
 
     name = models.CharField(max_length=2000)
 
@@ -110,7 +110,7 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
     @classmethod
     def on_class_prepared(cls):
         models.ForeignKey(
-            cls._parent_task,
+            cls._parent_task_model,
             on_delete=models.SET_NULL,
             related_name='child_task_group_%(class)s',
             null=True, blank=True
@@ -139,6 +139,8 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
         if self.tracker.has_changed('execute_date'):
             self._update_tasks_execute_dates()
 
+        self._save(*args, **kwargs)
+
         super().save(*args, **kwargs)
         self._set_status()
         super().save(update_fields=['status'])
@@ -154,6 +156,13 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
             if task.status == self.READY:
                 task.execute_date = self.execute_date
                 task.save()
+
+    def _save(self, *args, **kwargs):
+        """
+        Here Children class can set special attributes to saving model
+
+        :return: None
+        """
 
     def _set_status(self):
         if self.status != self.WAITING:
@@ -233,6 +242,8 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
                 self.task_group.save()
                 self._update_children_tasks_status()
 
+        self._save(*args, **kwargs)
+
         super().save(*args, **kwargs)
 
         if self.status == self.READY:
@@ -247,6 +258,13 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
                 for task_group in task_group_set.all():
                     task_group.status = self.READY
                     task_group.save()
+
+    def _save(self, *args, **kwargs):
+        """
+        Here Children class can set special attributes to saving model
+
+        :return: None
+        """
 
     def _create_task(self):
         return PeriodicTask.objects.create(
@@ -268,3 +286,39 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
 
     def _get_task_path(self):
         raise NotImplementedError('AbstractTask must define the _get_task_path method.')
+
+
+class AbstractAccessLevel(models.Model):
+    ACCESS_GUEST = 10
+    ACCESS_REPORTER = 20
+    ACCESS_DEVELOPER = 30
+    ACCESS_MASTER = 40
+    ACCESS_OWNER = 50
+    ACCESS_LEVEL_CHOICES = (
+        (ACCESS_GUEST, _('Guest')),
+        (ACCESS_REPORTER, _('Reporter')),
+        (ACCESS_DEVELOPER, _('Developer')),
+        (ACCESS_MASTER, _('Master')),
+        (ACCESS_OWNER, _('Owner')),
+    )
+
+    access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default=ACCESS_GUEST)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractVisibilityLevel(models.Model):
+    PRIVATE = 'private'
+    Internal = 'internal'
+    PUBLIC = 'public'
+    VISIBILITY_CHOICES = (
+        (PRIVATE, _('Private')),
+        (Internal, _('Internal')),
+        (PUBLIC, _('Public')),
+    )
+
+    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default=PRIVATE)
+
+    class Meta:
+        abstract = True
