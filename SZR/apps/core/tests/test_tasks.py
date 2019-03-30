@@ -8,19 +8,15 @@ from freezegun import freeze_time
 from core.models import *
 from core.tests.tasks import *
 from core.tests import models
+from core.tests.test_models import TaskGroupAndTaskMethods
 
 
-class BaseTaskTests(TestCase):
+class BaseTaskTests(TaskGroupAndTaskMethods):
     _task_cls = FakeTask
 
     def setUp(self):
         super().setUp()
-        self.gitlab_user = GitlabUser.objects.create()
-        self.task_group_model = models.FakeTaskGroup.objects.create()
-        self.task_model = models.FakeTask.objects.create(
-            owner=self.gitlab_user,
-            task_group=self.task_group_model
-        )
+        self.task_model = self.create_task()
 
     def get_run_args(self):
         return json.loads(self.task_model.celery_task.kwargs)

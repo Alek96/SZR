@@ -36,7 +36,7 @@
                 <div class="sidebar-submenu" style="display:block;">
                     <ul>
                         <li>
-                            <a href="{% url 'groups:group_detail' group.id %}">Details</a>
+                            <a href="{% url 'groups:detail' group.id %}">Details</a>
                         </li>
                         <li>
                             <a target="_blank" rel="noopener noreferrer" href="{{ group.web_url }}">
@@ -54,7 +54,7 @@
                 <div class="sidebar-submenu">
                     <ul>
                         <li>
-                            <a href="{% url 'groups:group_members' group.id %}">Details</a>
+                            <a href="{% url 'groups:members' group.id %}">Details</a>
                         </li>
                         <li>
                             <a href="#">Add Members</a>
@@ -70,7 +70,7 @@
                 <div class="sidebar-submenu">
                     <ul>
                         <li>
-                            <a href="{% url 'groups:group_tasks' group.id %}">Details</a>
+                            <a href="{% url 'groups:tasks' group.id %}">Details</a>
                         </li>
                         <li>
                             <a href="#">Add Task</a>
