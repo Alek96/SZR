@@ -11,8 +11,9 @@ class AddSubgroupGroupForm(BaseTaskGroupForm):
     class Meta(BaseTaskGroupForm.Meta):
         model = models.AddSubgroupGroup
 
-    def _save_in_db(self, task_group, group_id, **kwargs):
-        task_group.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
+    def _save(self, model, group_id, **kwargs):
+        super()._save(model=model, group_id=group_id, **kwargs)
+        model.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
 
 
 class AddSubgroupForm(BaseTaskForm):
@@ -21,6 +22,7 @@ class AddSubgroupForm(BaseTaskForm):
         fields = ['name', 'path', 'description', 'visibility']
 
     def _save_in_gitlab(self, data, user_id, group_id=None, **kwargs):
+        super()._save_in_gitlab(data=data, user_id=user_id, group_id=group_id, **kwargs)
         tasks.create_subgroup(user_id=user_id, group_id=group_id, **data, **kwargs)
 
 
@@ -28,8 +30,9 @@ class AddMemberGroupForm(BaseTaskGroupForm):
     class Meta(BaseTaskGroupForm.Meta):
         model = models.AddMemberGroup
 
-    def _save_in_db(self, task_group, group_id, **kwargs):
-        task_group.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
+    def _save(self, model, group_id, **kwargs):
+        super()._save(model=model, group_id=group_id, **kwargs)
+        model.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
 
 
 class AddMemberForm(BaseTaskForm):
@@ -38,4 +41,5 @@ class AddMemberForm(BaseTaskForm):
         fields = ['username', 'access_level']
 
     def _save_in_gitlab(self, data, user_id, group_id, **kwargs):
+        super()._save_in_gitlab(data=data, user_id=user_id, group_id=group_id, **kwargs)
         tasks.add_or_update_member(user_id=user_id, group_id=group_id, **data, **kwargs)

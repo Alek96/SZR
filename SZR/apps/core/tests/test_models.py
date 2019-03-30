@@ -85,6 +85,20 @@ class AbstractTaskStatus(TestCase):
         self.assertTrue(FakeTaskStatus(status=FakeTaskStatus.FAILED).is_finished())
 
 
+class ModelLinksMethodsTests(TestCase):
+    def setUp(self):
+        self.model = ModelLinksMethods()
+
+    def test_link_to_edit(self):
+        self.assertEqual(self.model.link_to_edit, '#')
+
+    def test_link_to_delete(self):
+        self.assertEqual(self.model.link_to_delete, '#')
+
+    def test_link_to_tasks_page(self):
+        self.assertEqual(self.model.link_to_tasks_page, '#')
+
+
 class TaskGroupAndTaskMethods(TestCase):
     def setUp(self):
         self.task_group = self.create_task_group()
@@ -112,6 +126,10 @@ class AbstractTaskGroupTests(TaskGroupAndTaskMethods):
         self.assertEqual(task_group.tasks_number, 0)
         self.assertEqual(task_group.finished_tasks_number, 0)
         self.assertEqual(task_group.failed_task_number, 0)
+
+    def test_link_to_new_task(self):
+        task_group = self.create_task_group()
+        self.assertEqual(task_group.link_to_new_task, '#')
 
     def test_status_ready(self):
         task_group = self.create_task_group(tasks_number=1)

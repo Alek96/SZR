@@ -165,6 +165,42 @@ class NewSubgroupGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest
         self.assertEqual(response.url, reverse('groups:tasks', args=(self.args['group_id'],)))
 
 
+class EditSubgroupGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'edit_subgroup_group'
+    args = {'task_group_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.task_group = AddSubgroupCreateMethods().create_task_group(
+            gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)
+        )
+        self.args['task_group_id'] = self.task_group.id
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_group_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        data = self.client.get(self.get_url()).context['form'].initial
+        self.assertEqual(data['name'], self.task_group.name)
+        data['name'] = 'Another Name'
+
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.task_group.link_to_tasks_page)
+        self.task_group.refresh_from_db()
+        self.assertEqual(self.task_group.name, data['name'])
+
+
 class NewSubgroupTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'new_subgroup_task'
     args = {'group_id': 42, 'task_group_id': 1}
@@ -178,7 +214,7 @@ class NewSubgroupTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest)
 
     @LoginMethods.login_wrapper
     def test_page_not_found(self):
-        self.args['task_group_id'] = self.args['task_group_id'] + 1
+        self.args['task_group_id'] += 1
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 404)
 
@@ -199,6 +235,44 @@ class NewSubgroupTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest)
         response = self.client.post(self.get_url(), AddSubgroupFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('groups:tasks', args=(self.args['group_id'],)))
+
+
+class EditSubgroupTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'edit_subgroup_task'
+    args = {'task_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.task = AddSubgroupCreateMethods().create_task(
+            task_group=AddSubgroupCreateMethods().create_task_group(
+                gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)))
+        self.args['task_id'] = self.task.id
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        data = self.client.get(self.get_url()).context['form'].initial
+        self.assertEqual(data['name'], self.task.name)
+        data['name'] = 'Another Name'
+        data['description'] = 'Description'
+
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.task.link_to_tasks_page)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.name, data['name'])
+        self.assertEqual(self.task.description, data['description'])
 
 
 class NewMemberPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
@@ -247,6 +321,42 @@ class NewMemberGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         self.assertEqual(response.url, reverse('groups:tasks', args=(self.args['group_id'],)))
 
 
+class EditMemberGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'edit_member_group'
+    args = {'task_group_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.task_group = AddMemberCreateMethods().create_task_group(
+            gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)
+        )
+        self.args['task_group_id'] = self.task_group.id
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_group_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        data = self.client.get(self.get_url()).context['form'].initial
+        self.assertEqual(data['name'], self.task_group.name)
+        data['name'] = 'Another Name'
+
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.task_group.link_to_tasks_page)
+        self.task_group.refresh_from_db()
+        self.assertEqual(self.task_group.name, data['name'])
+
+
 class NewMemberTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'new_member_task'
     args = {'group_id': 1, 'task_group_id': 1}
@@ -260,7 +370,7 @@ class NewMemberTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
 
     @LoginMethods.login_wrapper
     def test_page_not_found(self):
-        self.args['task_group_id'] = self.args['task_group_id'] + 1
+        self.args['task_group_id'] += 1
         response = self.client.get(self.get_url())
         self.assertEqual(response.status_code, 404)
 
@@ -281,6 +391,42 @@ class NewMemberTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         response = self.client.post(self.get_url(), AddMemberFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('groups:tasks', args=(self.args['group_id'],)))
+
+
+class EditMemberTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'edit_member_task'
+    args = {'task_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.task = AddMemberCreateMethods().create_task(
+            task_group=AddMemberCreateMethods().create_task_group(
+                gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)))
+        self.args['task_id'] = self.task.id
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        data = self.client.get(self.get_url()).context['form'].initial
+        self.assertEqual(data['username'], self.task.username)
+        data['username'] = 'Another username'
+
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.task.link_to_tasks_page)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.username, data['username'])
 
 
 class AjaxLoadSubgroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):

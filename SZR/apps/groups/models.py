@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.urls import reverse
 
 from core.models import AbstractGitlabModel
 from core.models import GitlabUser
@@ -96,6 +97,32 @@ class AbstractAddSubgroup(AbstractTask):
 class AddSubgroupGroup(AbstractParentTaskAddSubgroup):
     _parent_task_model = 'AddSubgroup'
 
+    @property
+    def link_to_edit(self):
+        kwargs = {
+            'task_group_id': self.id,
+        }
+        return reverse('groups:edit_subgroup_group', kwargs=kwargs)
+
+    @property
+    def link_to_delete(self):
+        return '#'
+
+    @property
+    def link_to_tasks_page(self):
+        kwargs = {
+            'group_id': self.gitlab_group.gitlab_id,
+        }
+        return reverse('groups:tasks', kwargs=kwargs)
+
+    @property
+    def link_to_new_task(self):
+        kwargs = {
+            'group_id': self.gitlab_group.gitlab_id,
+            'task_group_id': self.id,
+        }
+        return reverse('groups:new_subgroup_task', kwargs=kwargs)
+
 
 class AddSubgroup(AbstractAddSubgroup, AbstractVisibilityLevel):
     _task_group_model = AddSubgroupGroup
@@ -108,12 +135,56 @@ class AddSubgroup(AbstractAddSubgroup, AbstractVisibilityLevel):
     def task_name(self):
         return _('Create subgroup: {}'.format(self.name))
 
+    @property
+    def link_to_edit(self):
+        kwargs = {
+            'task_id': self.id,
+        }
+        return reverse('groups:edit_subgroup_task', kwargs=kwargs)
+
+    @property
+    def link_to_delete(self):
+        return '#'
+
+    @property
+    def link_to_tasks_page(self):
+        kwargs = {
+            'group_id': self.task_group.gitlab_group.gitlab_id,
+        }
+        return reverse('groups:tasks', kwargs=kwargs)
+
     def _get_task_path(self):
         return 'groups.tasks.AddSubgroupTask'
 
 
 class AddMemberGroup(AbstractParentTaskAddSubgroup):
     _parent_task_model = 'AddSubgroup'
+
+    @property
+    def link_to_edit(self):
+        kwargs = {
+            'task_group_id': self.id,
+        }
+        return reverse('groups:edit_member_group', kwargs=kwargs)
+
+    @property
+    def link_to_delete(self):
+        return '#'
+
+    @property
+    def link_to_tasks_page(self):
+        kwargs = {
+            'group_id': self.gitlab_group.gitlab_id,
+        }
+        return reverse('groups:tasks', kwargs=kwargs)
+
+    @property
+    def link_to_new_task(self):
+        kwargs = {
+            'group_id': self.gitlab_group.gitlab_id,
+            'task_group_id': self.id,
+        }
+        return reverse('groups:new_member_task', kwargs=kwargs)
 
 
 class AddMember(AbstractTask, AbstractAccessLevel):
@@ -125,6 +196,24 @@ class AddMember(AbstractTask, AbstractAccessLevel):
     @property
     def task_name(self):
         return _('Add user: {}'.format(self.username))
+
+    @property
+    def link_to_edit(self):
+        kwargs = {
+            'task_id': self.id,
+        }
+        return reverse('groups:edit_member_task', kwargs=kwargs)
+
+    @property
+    def link_to_delete(self):
+        return '#'
+
+    @property
+    def link_to_tasks_page(self):
+        kwargs = {
+            'group_id': self.task_group.gitlab_group.gitlab_id,
+        }
+        return reverse('groups:tasks', kwargs=kwargs)
 
     def _get_task_path(self):
         return 'groups.tasks.AddMemberTask'

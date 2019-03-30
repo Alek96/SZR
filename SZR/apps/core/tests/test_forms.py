@@ -3,13 +3,8 @@ from django import forms
 from django.utils import timezone
 from django.core.exceptions import NON_FIELD_ERRORS as django_NON_FIELD_ERRORS
 
-from core.forms import FormMethods
+from core.tests.forms import *
 from GitLabApi.exceptions import NON_FIELD_ERRORS as GitLabApi_NON_FIELD_ERRORS
-
-
-class FakeFormMethods(FormMethods):
-    name = forms.CharField(label='Name', max_length=50, initial='name')
-    path = forms.SlugField(label='Path', max_length=50, initial='path')
 
 
 class FormMethodsTest(TestCase):
@@ -38,3 +33,11 @@ class FormMethodsTest(TestCase):
         self.assertIn(dict['name'][1], str(all_errors['name'][-1]))
         self.assertIn(dict[GitLabApi_NON_FIELD_ERRORS][0], str(all_errors[django_NON_FIELD_ERRORS][-2]))
         self.assertIn(dict[GitLabApi_NON_FIELD_ERRORS][1], str(all_errors[django_NON_FIELD_ERRORS][-1]))
+
+
+class BaseTaskFormTest(TestCase):
+    pass
+
+
+class BaseTaskGroupFormTest(TestCase):
+    pass

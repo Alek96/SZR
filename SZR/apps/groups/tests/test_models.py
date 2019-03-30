@@ -162,14 +162,60 @@ class AddSubgroupCreateMethods(TaskGroupAndTaskMethods):
         )
 
 
-class AddSubgroupGroupTests(AbstractParentTaskSubgroupTests, AddSubgroupCreateMethods):
-    pass
+class AddSubgroupGroupTests(AddSubgroupCreateMethods, AbstractParentTaskSubgroupTests):
+    def test_link_to_edit(self):
+        task_group = self.create_task_group()
+        self.assertEqual(
+            task_group.link_to_edit,
+            reverse('groups:edit_subgroup_group', kwargs={'task_group_id': task_group.id}))
+
+    def test_link_to_delete(self):
+        task_group = self.create_task_group()
+        self.assertEqual(task_group.link_to_delete, '#')
+
+    def test_link_to_tasks_page(self):
+        task_group = self.create_task_group(
+            gitlab_group=GitlabGroup.objects.create(gitlab_id=42)
+        )
+        self.assertEqual(
+            task_group.link_to_tasks_page,
+            reverse('groups:tasks', kwargs={'group_id': task_group.gitlab_group.gitlab_id}))
+
+    def test_link_to_new_task(self):
+        task_group = self.create_task_group(
+            gitlab_group=GitlabGroup.objects.create(gitlab_id=42)
+        )
+        self.assertEqual(
+            task_group.link_to_new_task,
+            reverse('groups:new_subgroup_task', kwargs={
+                'group_id': task_group.gitlab_group.gitlab_id,
+                'task_group_id': task_group.id}))
 
 
-class AddSubgroupTests(AbstractTaskTests, AddSubgroupCreateMethods):
+class AddSubgroupTests(AddSubgroupCreateMethods, AbstractTaskTests):
     def test_task_name(self):
         task = self.create_task()
         self.assertEqual(task.task_name, 'Create subgroup: {}'.format(task.name))
+
+    def test_link_to_edit(self):
+        task = self.create_task()
+        self.assertEqual(
+            task.link_to_edit,
+            reverse('groups:edit_subgroup_task', kwargs={'task_id': task.id}))
+
+    def test_link_to_delete(self):
+        task = self.create_task()
+        self.assertEqual(task.link_to_delete, '#')
+
+    def test_link_to_tasks_page(self):
+        task = self.create_task(
+            task_group=self.create_task_group(
+                gitlab_group=GitlabGroup.objects.create(gitlab_id=42)
+            )
+        )
+        self.assertEqual(
+            task.link_to_tasks_page,
+            reverse('groups:tasks', kwargs={'group_id': task.task_group.gitlab_group.gitlab_id}))
 
 
 class AddMemberCreateMethods(TaskGroupAndTaskMethods):
@@ -193,11 +239,57 @@ class AddMemberCreateMethods(TaskGroupAndTaskMethods):
         return AddSubgroupCreateMethods().create_task()
 
 
-class AddMemberGroupsTests(AbstractParentTaskSubgroupTests, AddMemberCreateMethods):
-    pass
+class AddMemberGroupsTests(AddMemberCreateMethods, AbstractParentTaskSubgroupTests):
+    def test_link_to_edit(self):
+        task_group = self.create_task_group()
+        self.assertEqual(
+            task_group.link_to_edit,
+            reverse('groups:edit_member_group', kwargs={'task_group_id': task_group.id}))
+
+    def test_link_to_delete(self):
+        task_group = self.create_task_group()
+        self.assertEqual(task_group.link_to_delete, '#')
+
+    def test_link_to_tasks_page(self):
+        task_group = self.create_task_group(
+            gitlab_group=GitlabGroup.objects.create(gitlab_id=42)
+        )
+        self.assertEqual(
+            task_group.link_to_tasks_page,
+            reverse('groups:tasks', kwargs={'group_id': task_group.gitlab_group.gitlab_id}))
+
+    def test_link_to_new_task(self):
+        task_group = self.create_task_group(
+            gitlab_group=GitlabGroup.objects.create(gitlab_id=42)
+        )
+        self.assertEqual(
+            task_group.link_to_new_task,
+            reverse('groups:new_member_task', kwargs={
+                'group_id': task_group.gitlab_group.gitlab_id,
+                'task_group_id': task_group.id}))
 
 
-class AddMemberTests(AbstractTaskTests, AddMemberCreateMethods):
+class AddMemberTests(AddMemberCreateMethods, AbstractTaskTests):
     def test_task_name(self):
         task = self.create_task()
         self.assertEqual(task.task_name, 'Add user: {}'.format(task.username))
+
+    def test_link_to_edit(self):
+        task = self.create_task()
+        self.assertEqual(
+            task.link_to_edit,
+            reverse('groups:edit_member_task', kwargs={'task_id': task.id}))
+
+    def test_link_to_delete(self):
+        task = self.create_task()
+        self.assertEqual(task.link_to_delete, '#')
+
+    def test_link_to_tasks_page(self):
+        task = self.create_task(
+            task_group=self.create_task_group(
+                gitlab_group=GitlabGroup.objects.create(gitlab_id=42)
+            )
+        )
+        self.assertEqual(
+            task.link_to_tasks_page,
+            reverse('groups:tasks', kwargs={'group_id': task.task_group.gitlab_group.gitlab_id}))

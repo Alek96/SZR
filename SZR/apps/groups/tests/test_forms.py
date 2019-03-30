@@ -31,7 +31,7 @@ class AddSubgroupGroupFormTests(LoginMethods):
 
     def test_save_in_task_group(self):
         form = AddSubgroupGroupForm(self.valid_form_data)
-        form.save_in_db(group_id=1)
+        form.save(group_id=1)
 
         task_group = models.AddSubgroupGroup.objects.get(id=1)
         self.assertEqual(task_group.gitlab_group_id, 1)
@@ -83,13 +83,13 @@ class AddSubgroupFormTests(LoginMethods):
     def test_save_in_task_not_valid(self):
         form = AddSubgroupForm({})
         with self.assertRaises(WrongFormError):
-            form.save_in_db(user_id=1, task_group_id=1)
+            form.save(user_id=1, task_group_id=1)
 
     @LoginMethods.create_user_wrapper
     def test_save_in_task(self):
         form = AddSubgroupForm(self.valid_form_data)
         task_group = AddSubgroupCreateMethods().create_task_group()
-        form.save_in_db(self.user.id, task_group.id)
+        form.save(user_id=self.user.id, task_group_id=task_group.id)
 
         task = models.AddSubgroup.objects.get(task_group=task_group)
         for key, value in self.valid_form_data.items():
@@ -118,7 +118,7 @@ class AddMemberGroupFormTests(LoginMethods):
 
     def test_save_in_task_group(self):
         form = AddMemberGroupForm(self.valid_form_data)
-        form.save_in_db(group_id=1)
+        form.save(group_id=1)
 
         task_group = models.AddMemberGroup.objects.get(id=1)
         self.assertEqual(task_group.gitlab_group_id, 1)
@@ -167,13 +167,13 @@ class AddMemberFormTests(LoginMethods):
     def test_save_in_task_not_valid(self):
         form = AddMemberForm({})
         with self.assertRaises(WrongFormError):
-            form.save_in_db(user_id=1, task_group_id=1)
+            form.save(user_id=1, task_group_id=1)
 
     @LoginMethods.create_user_wrapper
     def test_save_in_task(self):
         form = AddMemberForm(self.valid_form_data)
         task_group = AddMemberCreateMethods().create_task_group()
-        form.save_in_db(self.user.id, task_group.id)
+        form.save(user_id=self.user.id, task_group_id=task_group.id)
 
         task = models.AddMember.objects.get(task_group=task_group)
         for key, value in self.valid_form_data.items():

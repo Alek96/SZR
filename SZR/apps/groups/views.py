@@ -110,11 +110,28 @@ def new_subgroup_group(request, group_id):
         "fields_title": 'Add Subgroup Group',
     }
     try:
-        form.save_in_db(group_id=group_id)
+        form.save(group_id=group_id)
     except WrongFormError:
         return render(request, 'groups/form_base_site.html', context)
     else:
         return HttpResponseRedirect(reverse('groups:tasks', args=(group_id,)))
+
+
+@login_required
+def edit_subgroup_group(request, task_group_id):
+    task_group = get_object_or_404(models.AddSubgroupGroup, id=task_group_id)
+    form = forms.AddSubgroupGroupForm(request.POST or None, instance=task_group)
+    context = {
+        "form": form,
+        "page_title": 'Edit Subgroup Group',
+        "fields_title": 'Edit Subgroup Group',
+    }
+    try:
+        model = form.update()
+    except WrongFormError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.link_to_tasks_page)
 
 
 @login_required
@@ -127,11 +144,28 @@ def new_subgroup_task(request, group_id, task_group_id):
         "fields_title": 'Add Subgroup Task',
     }
     try:
-        form.save_in_db(user_id=request.user.id, task_group_id=task_group_id)
+        form.save(user_id=request.user.id, task_group_id=task_group_id)
     except WrongFormError:
         return render(request, 'groups/form_base_site.html', context)
     else:
         return HttpResponseRedirect(reverse('groups:tasks', args=(group_id,)))
+
+
+@login_required
+def edit_subgroup_task(request, task_id):
+    task = get_object_or_404(models.AddSubgroup, id=task_id)
+    form = forms.AddSubgroupForm(request.POST or None, instance=task)
+    context = {
+        "form": form,
+        "page_title": 'Add Subgroup Task',
+        "fields_title": 'Add Subgroup Task',
+    }
+    try:
+        model = form.update()
+    except WrongFormError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.link_to_tasks_page)
 
 
 @login_required
@@ -159,11 +193,28 @@ def new_member_group(request, group_id):
         "fields_title": 'Add Member Group',
     }
     try:
-        form.save_in_db(group_id=group_id)
+        form.save(group_id=group_id)
     except WrongFormError:
         return render(request, 'groups/form_base_site.html', context)
     else:
         return HttpResponseRedirect(reverse('groups:tasks', args=(group_id,)))
+
+
+@login_required
+def edit_member_group(request, task_group_id):
+    task_group = get_object_or_404(models.AddMemberGroup, id=task_group_id)
+    form = forms.AddMemberGroupForm(request.POST or None, instance=task_group)
+    context = {
+        "form": form,
+        "page_title": 'Edit Member Group',
+        "fields_title": 'Edit Member Group',
+    }
+    try:
+        model = form.update()
+    except WrongFormError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.link_to_tasks_page)
 
 
 @login_required
@@ -176,11 +227,28 @@ def new_member_task(request, group_id, task_group_id):
         "fields_title": 'Add Member Task',
     }
     try:
-        form.save_in_db(user_id=request.user.id, task_group_id=task_group_id)
+        form.save(user_id=request.user.id, task_group_id=task_group_id)
     except WrongFormError:
         return render(request, 'groups/form_base_site.html', context)
     else:
         return HttpResponseRedirect(reverse('groups:tasks', args=(group_id,)))
+
+
+@login_required
+def edit_member_task(request, task_id):
+    task = get_object_or_404(models.AddMember, id=task_id)
+    form = forms.AddMemberForm(request.POST or None, instance=task)
+    context = {
+        "form": form,
+        "page_title": 'Edit Member Task',
+        "fields_title": 'Edit Member Task',
+    }
+    try:
+        model = form.update()
+    except WrongFormError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.link_to_tasks_page)
 
 
 @login_required

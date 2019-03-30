@@ -1,14 +1,14 @@
-from django.db import models
-from django.conf import settings
-from django.utils.translation import gettext_lazy as _
+import json
+
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.db.models import F, Value, When, Case
 from django.utils import timezone
-from django.contrib.auth.models import User
-from social_django.models import UserSocialAuth
+from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from model_utils import FieldTracker
-import json
+from social_django.models import UserSocialAuth
 
 
 class AbstractGitlabModel(models.Model):
@@ -76,6 +76,21 @@ class AbstractTaskStatus(models.Model):
         return self.status == self.SUCCEED or self.status == self.FAILED
 
 
+class ModelLinksMethods:
+
+    @property
+    def link_to_edit(self):
+        return '#'
+
+    @property
+    def link_to_delete(self):
+        return '#'
+
+    @property
+    def link_to_tasks_page(self):
+        return '#'
+
+
 def create_field_tracker(cls, name):
     """
     Add field tracker to given model class and set it to given name attribute.
@@ -91,7 +106,7 @@ def create_field_tracker(cls, name):
     tracker.finalize_class(cls)
 
 
-class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
+class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods):
     _parent_task_model = None
 
     name = models.CharField(max_length=2000)
@@ -116,6 +131,10 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
             null=True, blank=True
         ).contribute_to_class(cls, 'parent_task')
         create_field_tracker(cls, 'tracker')
+
+    @property
+    def link_to_new_task(self):
+        return '#'
 
     def clean(self):
         super().clean()
@@ -190,7 +209,7 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus):
         )
 
 
-class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
+class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods):
     _task_group_model = None
 
     owner = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, related_name='owned_tasks_%(class)s')
