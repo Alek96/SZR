@@ -55,9 +55,16 @@ def members(request, group_id):
 @login_required
 def tasks(request, group_id):
     group = GitLabApi(request.user.id).groups.get(group_id)
+    gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
+    new_group_links = [
+        ('New Subgroup Group', reverse('groups:new_subgroup_group', kwargs={'group_id': group_id})),
+        ('New Member Group', reverse('groups:new_member_group', kwargs={'group_id': group_id}))
+    ]
     context = {
         'group': group,
-        'tasks': [],
+        'unfinished_task_list': gitlab_group.get_unfinished_task_list(),
+        'finished_task_list': gitlab_group.get_finished_task_list(),
+        'new_group_links': new_group_links,
     }
     return render(request, 'groups/tasks.html', context)
 

@@ -1,6 +1,8 @@
+from itertools import chain
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 from core.models import AbstractGitlabModel
 from core.models import GitlabUser
@@ -14,6 +16,43 @@ class GitlabGroup(AbstractGitlabModel):
 
     def __repr__(self):
         return self.__str__()
+
+    def get_unfinished_task_list(self):
+        add_subgroup_group = AddSubgroupGroup.objects.filter(
+            Q(gitlab_group=self) & (
+                Q(status=AddSubgroupGroup.WAITING) |
+                Q(status=AddSubgroupGroup.READY) |
+                Q(status=AddSubgroupGroup.RUNNING)
+            ))
+
+        add_member_group = AddMemberGroup.objects.filter(
+            Q(gitlab_group=self) & (
+                Q(status=AddMemberGroup.WAITING) |
+                Q(status=AddMemberGroup.READY) |
+                Q(status=AddMemberGroup.RUNNING)
+            ))
+
+        return sorted(
+            chain(add_subgroup_group, add_member_group),
+            key=lambda instance: instance.execute_date,
+            reverse=True)
+
+    def get_finished_task_list(self):
+        add_subgroup_group = AddSubgroupGroup.objects.filter(
+            Q(gitlab_group=self) & (
+                Q(status=AddSubgroupGroup.SUCCEED) |
+                Q(status=AddSubgroupGroup.FAILED)
+            ))
+
+        add_member_group = AddMemberGroup.objects.filter(
+            Q(gitlab_group=self) & (
+                Q(status=AddMemberGroup.SUCCEED) |
+                Q(status=AddMemberGroup.FAILED)
+            ))
+
+        return sorted(
+            chain(add_subgroup_group, add_member_group),
+            key=lambda instance: instance.finished_date)
 
 
 class AbstractParentTaskAddSubgroup(AbstractTaskGroup):
@@ -65,6 +104,10 @@ class AddSubgroup(AbstractAddSubgroup, AbstractVisibilityLevel):
     path = models.SlugField(max_length=100)
     description = models.TextField(max_length=2000, null=True, blank=True)
 
+    @property
+    def task_name(self):
+        return _('Create subgroup: {}'.format(self.name))
+
     def _get_task_path(self):
         return 'groups.tasks.AddSubgroupTask'
 
@@ -78,6 +121,10 @@ class AddMember(AbstractTask, AbstractAccessLevel):
 
     username = models.CharField(max_length=100)
     new_gitlab_user = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, null=True, blank=True)
+
+    @property
+    def task_name(self):
+        return _('Add user: {}'.format(self.username))
 
     def _get_task_path(self):
         return 'groups.tasks.AddMemberTask'

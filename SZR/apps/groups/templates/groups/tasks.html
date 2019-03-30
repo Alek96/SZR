@@ -40,11 +40,43 @@
             <div class="col-md-12">
                 <div class="list-group list-group-root well">
                     <ul class="group-list-tree">
-                        {% for task in tasks %}
+                        {% for task in unfinished_task_list %}
                             <li>
                                 <div class="list-group-item-2 list-group-item-member">
                                     <a href="#">
                                         <span>{{ task.name }}</span>
+                                        <span>{{ task.get_status_display }}</span>
+                                        <span>{{ task.execute_date }}</span>
+                                    </a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Finished Tasks</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="list-group list-group-root well">
+                    <ul class="group-list-tree">
+                        {% for task in finished_task_list %}
+                            <li>
+                                <div class="list-group-item-2 list-group-item-member">
+                                    <a href="#">
+                                        <span>{{ task.name }}</span>
+                                        <span>{{ task.get_status_display }}</span>
+                                        <span>{{ task.finished_date }}</span>
                                     </a>
                                 </div>
                             </li>

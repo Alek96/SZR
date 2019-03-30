@@ -237,6 +237,10 @@ class AbstractTaskNotImplementedTests(TestCase):
 
 
 class AbstractTaskTests(TaskGroupAndTaskMethods):
+    def test_task_name(self):
+        task = self.create_task()
+        self.assertEqual(task.task_name, str(task))
+
     def test_after_creating_task_group_is_updated(self):
         task = self.create_task()
         # task group

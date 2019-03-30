@@ -209,6 +209,10 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus):
         task_group.contribute_to_class(cls, 'task_group')
         create_field_tracker(cls, 'tracker')
 
+    @property
+    def task_name(self):
+        return str(self)
+
     def clean(self):
         super().clean()
 

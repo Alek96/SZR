@@ -81,9 +81,20 @@ class TasksPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         self.assertTemplateUsed(response, 'groups/tasks.html')
 
         self.assertIn('group', response.context)
-        self.assertIn('tasks', response.context)
+        self.assertIn('unfinished_task_list', response.context)
+        self.assertIn('finished_task_list', response.context)
+        self.assertIn('new_group_links', response.context)
         self.assertIsInstance(response.context['group'], objects.Group)
-        self.assertIsInstance(response.context['tasks'], list)
+        self.assertIsInstance(response.context['unfinished_task_list'], list)
+        self.assertIsInstance(response.context['finished_task_list'], list)
+        self.assertIsInstance(response.context['new_group_links'], list)
+
+        new_group_links = [
+            ('New Subgroup Group', reverse('groups:new_subgroup_group', kwargs=self.args)),
+            ('New Member Group', reverse('groups:new_member_group', kwargs=self.args))
+        ]
+        for group_link in response.context['new_group_links']:
+            self.assertIn(group_link, new_group_links)
 
 
 class NewGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
