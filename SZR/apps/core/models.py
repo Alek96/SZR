@@ -1,5 +1,6 @@
 import json
 
+from GitLabApi.objects import VisibilityLevel, AccessLevel
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -76,18 +77,18 @@ class AbstractTaskStatus(models.Model):
         return self.status == self.SUCCEED or self.status == self.FAILED
 
 
-class ModelLinksMethods:
+class ModelUrlsMethods:
 
     @property
-    def link_to_edit(self):
+    def edit_url(self):
         return '#'
 
     @property
-    def link_to_delete(self):
+    def delete_url(self):
         return '#'
 
     @property
-    def link_to_tasks_page(self):
+    def tasks_page_url(self):
         return '#'
 
 
@@ -106,7 +107,7 @@ def create_field_tracker(cls, name):
     tracker.finalize_class(cls)
 
 
-class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods):
+class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
     _parent_task_model = None
 
     name = models.CharField(max_length=2000)
@@ -133,7 +134,7 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods
         create_field_tracker(cls, 'tracker')
 
     @property
-    def link_to_new_task(self):
+    def new_task_url(self):
         return '#'
 
     def clean(self):
@@ -209,7 +210,7 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods
         )
 
 
-class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods):
+class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
     _task_group_model = None
 
     owner = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, related_name='owned_tasks_%(class)s')
@@ -311,37 +312,16 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelLinksMethods):
         raise NotImplementedError('AbstractTask must define the _get_task_path method.')
 
 
-class AbstractAccessLevel(models.Model):
-    ACCESS_GUEST = 10
-    ACCESS_REPORTER = 20
-    ACCESS_DEVELOPER = 30
-    ACCESS_MASTER = 40
-    ACCESS_OWNER = 50
-    ACCESS_LEVEL_CHOICES = (
-        (ACCESS_GUEST, _('Guest')),
-        (ACCESS_REPORTER, _('Reporter')),
-        (ACCESS_DEVELOPER, _('Developer')),
-        (ACCESS_MASTER, _('Master')),
-        (ACCESS_OWNER, _('Owner')),
-    )
-
-    access_level = models.IntegerField(choices=ACCESS_LEVEL_CHOICES, default=ACCESS_GUEST)
+class AbstractAccessLevel(models.Model, AccessLevel):
+    access_level = models.IntegerField(choices=AccessLevel.ACCESS_LEVEL_CHOICES, default=AccessLevel.ACCESS_GUEST)
 
     class Meta:
         abstract = True
 
 
-class AbstractVisibilityLevel(models.Model):
-    PRIVATE = 'private'
-    Internal = 'internal'
-    PUBLIC = 'public'
-    VISIBILITY_CHOICES = (
-        (PRIVATE, _('Private')),
-        (Internal, _('Internal')),
-        (PUBLIC, _('Public')),
-    )
-
-    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default=PRIVATE)
+class AbstractVisibilityLevel(models.Model, VisibilityLevel):
+    visibility = models.CharField(max_length=10, choices=VisibilityLevel.VISIBILITY_CHOICES,
+                                  default=VisibilityLevel.PRIVATE)
 
     class Meta:
         abstract = True

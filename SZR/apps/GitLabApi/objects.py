@@ -1,46 +1,67 @@
-from gitlab import base
+from GitLabApi import mixins
+from GitLabApi.exceptions import GitlabGetError
+from django.utils.translation import gettext_lazy as _
 
-from GitLabApi.mixins import *
-from GitLabApi.exceptions import *
+
+class ChoiceAttribute:
+    def _get_field_readable(self, field, choices):
+        return dict(choices).get(field, field)
 
 
-class GroupSubgroup(RESTObject):
+class AccessLevel(ChoiceAttribute):
+    ACCESS_GUEST = 10
+    ACCESS_REPORTER = 20
+    ACCESS_DEVELOPER = 30
+    ACCESS_MASTER = 40
+    ACCESS_OWNER = 50
+    ACCESS_LEVEL_CHOICES = (
+        (ACCESS_GUEST, _('Guest')),
+        (ACCESS_REPORTER, _('Reporter')),
+        (ACCESS_DEVELOPER, _('Developer')),
+        (ACCESS_MASTER, _('Master')),
+        (ACCESS_OWNER, _('Owner')),
+    )
+
+    def get_access_level_readable(self):
+        return self._get_field_readable(getattr(self, 'access_level', None), self.ACCESS_LEVEL_CHOICES)
+
+
+class VisibilityLevel(ChoiceAttribute):
+    PRIVATE = 'private'
+    Internal = 'internal'
+    PUBLIC = 'public'
+    VISIBILITY_CHOICES = (
+        (PRIVATE, _('Private')),
+        (Internal, _('Internal')),
+        (PUBLIC, _('Public')),
+    )
+
+    def get_visibility_readable(self):
+        return self._get_field_readable(getattr(self, 'visibility', None), self.VISIBILITY_CHOICES)
+
+
+class GroupSubgroup(mixins.RESTObject, VisibilityLevel):
     pass
 
 
-class GroupSubgroupManager(ListMixin):
+class GroupSubgroupManager(mixins.ListMixin):
     _obj_cls = GroupSubgroup
 
 
-class GroupProject(RESTObject):
+class GroupProject(mixins.RESTObject, VisibilityLevel):
     pass
 
 
-class GroupProjectManager(ListMixin):
+class GroupProjectManager(mixins.ListMixin):
     _obj_cls = GroupProject
 
 
-class GroupMember(ObjectSaveMixin, ObjectDeleteMixin):
+class GroupMember(mixins.ObjectSaveMixin, mixins.ObjectDeleteMixin, AccessLevel):
     pass
 
 
-class GroupMemberManager(CRUDMixin):
+class GroupMemberManager(mixins.CRUDMixin, mixins.AllMixin):
     _obj_cls = GroupMember
-
-    def all(self, **kwargs):
-
-        """
-        gitlab.v4.objects.GroupMemberManager.all() returns dict, so we need convert them to objects, like in list method
-        Code is copied from gitlab.mixins.ListMixin.list
-        """
-        obj = self._rest_manager.all(**kwargs)
-
-        if isinstance(obj, list):
-            obj_list = [self._rest_manager._obj_cls(self._rest_manager, item) for item in obj]
-        else:
-            obj_list = base.RESTObjectList(self._rest_manager, self._rest_manager._obj_cls, obj)
-
-        return [self._obj_cls(item) for item in obj_list]
 
     def external(self, **kwargs):
         internal = self.list()
@@ -59,7 +80,7 @@ class GroupMemberManager(CRUDMixin):
         return external
 
 
-class Group(ObjectSaveMixin, ObjectDeleteMixin):
+class Group(mixins.ObjectSaveMixin, mixins.ObjectDeleteMixin, VisibilityLevel):
     def __init__(self, rest_object):
         super().__init__(rest_object)
         self.__dict__.update({
@@ -76,7 +97,7 @@ class Group(ObjectSaveMixin, ObjectDeleteMixin):
         super().save(**kwargs)
 
 
-class GroupManager(CRUDMixin):
+class GroupManager(mixins.CRUDMixin):
     _obj_cls = Group
 
     def get_roots(self):
@@ -89,7 +110,7 @@ class GroupManager(CRUDMixin):
         return [item for item in group_list if not item.parent_id]
 
 
-class User(ObjectSaveMixin, ObjectDeleteMixin):
+class User(mixins.ObjectSaveMixin, mixins.ObjectDeleteMixin):
 
     def save(self, **kwargs):
         """
@@ -98,7 +119,7 @@ class User(ObjectSaveMixin, ObjectDeleteMixin):
         raise NotImplementedError("gitlab module does not have working method")
 
 
-class UserManager(CRUDMixin):
+class UserManager(mixins.CRUDMixin):
     _obj_cls = User
 
     def get(self, id=None, username=None, **kwargs):
@@ -114,27 +135,12 @@ class UserManager(CRUDMixin):
             return user[0]
 
 
-class ProjectMember(ObjectSaveMixin, ObjectDeleteMixin):
+class ProjectMember(mixins.ObjectSaveMixin, mixins.ObjectDeleteMixin, AccessLevel):
     pass
 
 
-class ProjectMemberManager(CRUDMixin):
+class ProjectMemberManager(mixins.CRUDMixin, mixins.AllMixin):
     _obj_cls = ProjectMember
-
-    def all(self, **kwargs):
-
-        """
-        gitlab.v4.objects.ProjectMemberManager.all() returns dict, so we need convert them to objects, like in list method
-        Code is copied from gitlab.mixins.ListMixin.list
-        """
-        obj = self._rest_manager.all(**kwargs)
-
-        if isinstance(obj, list):
-            obj_list = [self._rest_manager._obj_cls(self._rest_manager, item) for item in obj]
-        else:
-            obj_list = base.RESTObjectList(self._rest_manager, self._rest_manager._obj_cls, obj)
-
-        return [self._obj_cls(item) for item in obj_list]
 
     def external(self, **kwargs):
         internal = self.list()
@@ -153,7 +159,7 @@ class ProjectMemberManager(CRUDMixin):
         return external
 
 
-class Project(ObjectSaveMixin, ObjectDeleteMixin):
+class Project(mixins.ObjectSaveMixin, mixins.ObjectDeleteMixin, VisibilityLevel):
     def __init__(self, rest_object):
         super().__init__(rest_object)
         self.__dict__.update({
@@ -168,5 +174,5 @@ class Project(ObjectSaveMixin, ObjectDeleteMixin):
         super().save(**kwargs)
 
 
-class ProjectManager(CRUDMixin):
+class ProjectManager(mixins.CRUDMixin):
     _obj_cls = Project

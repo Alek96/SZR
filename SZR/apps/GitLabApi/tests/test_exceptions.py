@@ -1,6 +1,6 @@
 import unittest
 
-from GitLabApi.exceptions import *
+from GitLabApi.exceptions import GitlabError, NON_FIELD_ERRORS, GitlabOperationError, on_error
 
 
 class GitlabErrorTests(unittest.TestCase):

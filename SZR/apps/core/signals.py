@@ -1,9 +1,8 @@
-from django.db.models.signals import pre_save, post_save
-from django.dispatch import receiver
-from django.contrib.auth.models import User
-from social_django.models import UserSocialAuth
-
 from core.models import GitlabUser
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from social_django.models import UserSocialAuth
 
 
 @receiver(post_save, sender=UserSocialAuth)

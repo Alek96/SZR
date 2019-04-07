@@ -1,4 +1,4 @@
-from core.models import *
+from core.models import AbstractTaskStatus, AbstractTaskGroup, AbstractTask
 
 
 class FakeTaskStatus(AbstractTaskStatus):

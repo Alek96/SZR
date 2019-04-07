@@ -1,8 +1,9 @@
 import unittest
-from unittest import mock
 
 from GitLabApi import base
-from GitLabApi.mixins import *
+from GitLabApi import exceptions
+from GitLabApi import mixins
+from gitlab import exceptions as gl_exceptions
 
 
 class FakeGitlab(object):
@@ -29,7 +30,7 @@ class FakeManager(base.RESTManager):
 
 class TestMetaMixins(unittest.TestCase):
     def test_crud_mixin(self):
-        class M(CRUDMixin):
+        class M(mixins.CRUDMixin):
             pass
 
         obj = M(FakeGitlab())
@@ -38,16 +39,16 @@ class TestMetaMixins(unittest.TestCase):
         self.assertTrue(hasattr(obj, 'create'))
         self.assertTrue(hasattr(obj, 'update'))
         self.assertTrue(hasattr(obj, 'delete'))
-        self.assertIsInstance(obj, ListMixin)
-        self.assertIsInstance(obj, GetMixin)
-        self.assertIsInstance(obj, CreateMixin)
-        self.assertIsInstance(obj, UpdateMixin)
-        self.assertIsInstance(obj, DeleteMixin)
+        self.assertIsInstance(obj, mixins.ListMixin)
+        self.assertIsInstance(obj, mixins.GetMixin)
+        self.assertIsInstance(obj, mixins.CreateMixin)
+        self.assertIsInstance(obj, mixins.UpdateMixin)
+        self.assertIsInstance(obj, mixins.DeleteMixin)
 
 
 class TestMixinMethods(unittest.TestCase):
     def test_get_mixin(self):
-        class M(GetMixin, FakeManager):
+        class M(mixins.GetMixin, FakeManager):
             pass
 
         class FakeGet(FakeGitlab):
@@ -63,19 +64,19 @@ class TestMixinMethods(unittest.TestCase):
         self.assertEqual(mgr._rest_manager.args, (42,))
 
     def test_get_mixin_err(self):
-        class M(GetMixin, FakeManager):
+        class M(mixins.GetMixin, FakeManager):
             pass
 
         class FakeGet(FakeGitlab):
             def get(self, *args, **kwargs):
                 raise gl_exceptions.GitlabGetError('error')
 
-        with self.assertRaises(GitlabGetError) as error:
+        with self.assertRaises(exceptions.GitlabGetError) as error:
             M(FakeGet()).get(42)
         self.assertIn('error', str(error.exception))
 
     def test_list_mixin(self):
-        class M(ListMixin, FakeManager):
+        class M(mixins.ListMixin, FakeManager):
             pass
 
         class FakeList(FakeGitlab):
@@ -89,19 +90,19 @@ class TestMixinMethods(unittest.TestCase):
         self.assertEqual(len(obj_list), 2)
 
     def test_list_mixin_err(self):
-        class M(ListMixin, FakeManager):
+        class M(mixins.ListMixin, FakeManager):
             pass
 
         class FakeList(FakeGitlab):
             def list(self, **kwargs):
                 raise gl_exceptions.GitlabListError('error')
 
-        with self.assertRaises(GitlabListError) as error:
+        with self.assertRaises(exceptions.GitlabListError) as error:
             M(FakeList()).list()
         self.assertIn('error', str(error.exception))
 
     def test_create_mixin(self):
-        class M(CreateMixin, FakeManager):
+        class M(mixins.CreateMixin, FakeManager):
             pass
 
         class FakeCreate(FakeGitlab):
@@ -115,19 +116,19 @@ class TestMixinMethods(unittest.TestCase):
         self.assertEqual(mgr._rest_manager.args, ({'foo': 'bar'},))
 
     def test_create_mixin_err(self):
-        class M(CreateMixin, FakeManager):
+        class M(mixins.CreateMixin, FakeManager):
             pass
 
         class FakeCreate(FakeGitlab):
             def create(self, *args, **kwargs):
                 raise gl_exceptions.GitlabCreateError('error')
 
-        with self.assertRaises(GitlabCreateError) as error:
+        with self.assertRaises(exceptions.GitlabCreateError) as error:
             M(FakeCreate()).create({})
         self.assertIn('error', str(error.exception))
 
     def test_update_mixin(self):
-        class M(UpdateMixin, FakeManager):
+        class M(mixins.UpdateMixin, FakeManager):
             pass
 
         class FakeUpdate(FakeGitlab):
@@ -139,20 +140,19 @@ class TestMixinMethods(unittest.TestCase):
         self.assertEqual(mgr._rest_manager.args, (42, {'foo': 'bar'}))
 
     def test_update_mixin_err(self):
-        class M(UpdateMixin, FakeManager):
+        class M(mixins.UpdateMixin, FakeManager):
             pass
 
         class FakeUpdate(FakeGitlab):
             def update(self, *args, **kwargs):
                 raise gl_exceptions.GitlabUpdateError('error')
 
-        with self.assertRaises(GitlabUpdateError) as error:
+        with self.assertRaises(exceptions.GitlabUpdateError) as error:
             M(FakeUpdate()).update(42, {'foo': 'bar'})
         self.assertIn('error', str(error.exception))
 
-    @unittest.skip
     def test_delete_mixin(self):
-        class M(DeleteMixin, FakeManager):
+        class M(mixins.DeleteMixin, FakeManager):
             pass
 
         class FakeDelete(FakeGitlab):
@@ -162,3 +162,42 @@ class TestMixinMethods(unittest.TestCase):
         mgr = M(FakeDelete())
         mgr.delete(42)
         self.assertEqual(mgr._rest_manager.args, (42,))
+
+    def test_delete_mixin_err(self):
+        class M(mixins.DeleteMixin, FakeManager):
+            pass
+
+        class FakeDelete(FakeGitlab):
+            def delete(self, *args, **kwargs):
+                raise gl_exceptions.GitlabDeleteError('error')
+
+        with self.assertRaises(exceptions.GitlabDeleteError) as error:
+            M(FakeDelete()).delete(42)
+        self.assertIn('error', str(error.exception))
+
+    @unittest.skip('We test it in test_gitlab_api with real Gitlab')
+    def test_all_mixin(self):
+        class M(mixins.AllMixin, FakeManager):
+            pass
+
+        class FakeAll(FakeGitlab):
+            def all(self, **kwargs):
+                return [FakeGitlab, FakeGitlab]
+
+        mgr = M(FakeAll())
+        obj_list = mgr.all()
+        self.assertIsInstance(obj_list, list)
+        self.assertIsInstance(obj_list[0], FakeObject)
+        self.assertEqual(len(obj_list), 2)
+
+    def test_all_mixin_err(self):
+        class M(mixins.AllMixin, FakeManager):
+            pass
+
+        class FakeAll(FakeGitlab):
+            def all(self, **kwargs):
+                raise gl_exceptions.GitlabListError('error')
+
+        with self.assertRaises(exceptions.GitlabListError) as error:
+            M(FakeAll()).all()
+        self.assertIn('error', str(error.exception))

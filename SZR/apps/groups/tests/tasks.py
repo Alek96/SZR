@@ -1,8 +1,7 @@
-from __future__ import absolute_import, unicode_literals
-
-from SZR.celery import app as celery_app
 from core.tasks import BaseTask
 from groups.tests import models
+
+from SZR.celery import app as celery_app
 
 
 class FakeTask(BaseTask):

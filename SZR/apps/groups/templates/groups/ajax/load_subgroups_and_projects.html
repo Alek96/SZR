@@ -8,6 +8,7 @@
                 <a href="{% url 'groups:detail' group.id %}">
                     <span>{{ group.name }}</span>
                 </a>
+                <span>{{ group.get_visibility_readable }}</span>
             </div>
             <div class="list-group-submenu" load-data-url="{% url 'groups:ajax_load_subgroups_and_projects' group.id %}">
             </div>
@@ -26,6 +27,7 @@
                 <a href="#">
                     <span>{{ project.name }}</span>
                 </a>
+                <span>{{ project.get_visibility_readable }}</span>
             </div>
         </li>
     {% endfor %}

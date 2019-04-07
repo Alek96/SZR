@@ -1,17 +1,18 @@
+import json
 import unittest
 from unittest import mock
-from django.test import TestCase
-from django.conf import settings
-
-from GitLabApi import *
-from GitLabApi.MockUrls import *
-from GitLabApi.exceptions import *
-from GitLabApi.objects import *
-from core.tests.test_models import GitlabUserModelMethod
-from core.models import GitlabUser
 
 import gitlab
-import json
+from GitLabApi import *
+from GitLabApi import GitLabContent
+from GitLabApi import MockUrls
+from GitLabApi.exceptions import GitlabGetError
+from GitLabApi.objects import GroupManager, UserManager, ProjectManager
+from core.models import GitlabUser
+from core.tests.test_models import GitlabUserModelMethod
+from django.conf import settings
+from django.test import TestCase
+from httmock import HTTMock
 
 
 class TestIntegrationGitLabApi(TestCase, GitlabUserModelMethod):
@@ -32,13 +33,13 @@ class TestIntegrationGitLabApi(TestCase, GitlabUserModelMethod):
 
 
 class GitLabApiTestsCases:
-    class TestBase(unittest.TestCase, MockUrlBase):
+    class TestBase(unittest.TestCase, MockUrls.MockUrlBase):
         _gitlab_api_mgr = None
 
         def setUp(self):
             user_id = 1
             with mock.patch.object(GitLabApi, '_get_gitlab_connection',
-                                   return_value=gitlab.Gitlab("{}://{}".format(self._scheme, self._netloc),
+                                   return_value=gitlab.Gitlab("{}://{}".format(self.scheme, self.netloc),
                                                               private_token="private_token")
                                    ) as mock_get_gitlab_connection:
                 self.gitlab_api = GitLabApi(user_id)
@@ -55,33 +56,33 @@ class GitLabApiTestsCases:
                 for key, value in args.items():
                     self.assertEqual(body_dict[key], value)
 
-    class TestList(TestBase, MockUrlList):
+    class TestList(TestBase, MockUrls.MockUrlList):
         def test_list(self):
-            content = self.get_list_content()
+            content = self.list_content
 
-            with HTTMock(self.get_mock_list_url()):
+            with HTTMock(self.get_mock_for_list_url()):
                 list = self._gitlab_api_mgr.list()
                 self.assertGreater(len(list), 0)
                 for cont, obj in zip(content, list):
                     for key, value in cont.items():
                         self.assertEqual(getattr(obj, key), value)
 
-    class TestGet(TestBase, MockUrlGet):
+    class TestGet(TestBase, MockUrls.MockUrlGet):
         def test_get(self):
-            content = self.get_get_content()
+            content = self.get_content
 
-            with HTTMock(self.get_mock_get_url()):
+            with HTTMock(self.get_mock_for_get_url()):
                 obj = self._gitlab_api_mgr.get(content['id'])
                 self.assertTrue(obj)
                 for key, value in content.items():
                     self.assertEqual(getattr(obj, key), value)
 
-    class TestCreate(TestBase, MockUrlCreate):
+    class TestCreate(TestBase, MockUrls.MockUrlCreate):
         def test_create(self):
             args = self.get_create_args()
-            content = self.get_create_content()
+            content = self.create_content
 
-            with HTTMock(self.get_mock_create_url(args=args)):
+            with HTTMock(self.get_mock_for_create_url(args=args)):
                 obj = self._gitlab_api_mgr.create(args)
                 self.assertTrue(obj)
                 for key, value in content.items():
@@ -90,30 +91,47 @@ class GitLabApiTestsCases:
         def get_create_args(self):
             return {}
 
-    class TestDelete(TestBase, MockUrlDelete):
+    class TestDelete(TestBase, MockUrls.MockUrlDelete):
         def test_delete(self):
             id = 1
-            with HTTMock(self.get_mock_delete_url()):
+            with HTTMock(self.get_mock_for_delete_url()):
                 self._gitlab_api_mgr.delete(id)
 
     class TestCRUD(TestList, TestGet, TestCreate, TestDelete):
         pass
 
-    class TestSaveObj(TestBase, MockUrlSave):
-        def test_save_obj(self, **kwargs):
-            content = self.get_save_content()
+    class TestAll(TestBase, MockUrls.MockUrlAll):
+        def _test_all(self, **kwargs):
+            content = self.all_content
 
-            with HTTMock(self.get_mock_save_url(**kwargs)):
+            with HTTMock(self.get_mock_for_all_url()):
+                member_list = self._gitlab_api_mgr.all(**kwargs)
+                self.assertGreater(len(member_list), 0)
+                for member_info, member in zip(content, member_list):
+                    for key, value in member_info.items():
+                        self.assertEqual(getattr(member, key), value)
+
+        def test_all(self):
+            self._test_all()
+
+        def test_all_single_content_element(self):
+            self._test_all(as_list=False)
+
+    class TestSaveObj(TestBase, MockUrls.MockUrlSave):
+        def test_save_obj(self, **kwargs):
+            content = self.save_content
+
+            with HTTMock(self.get_mock_for_save_url(**kwargs)):
                 obj = self._gitlab_api_mgr.save()
                 self.assertFalse(obj)
 
-    class TestDeleteObj(TestBase, MockUrlDelete):
+    class TestDeleteObj(TestBase, MockUrls.MockUrlDelete):
         def test_delete_obj(self):
-            with HTTMock(self.get_mock_delete_url()):
+            with HTTMock(self.get_mock_for_delete_url()):
                 self._gitlab_api_mgr.delete()
 
 
-class TestGitLabGroupsApi(GitLabApiTestsCases.TestCRUD, MockGroupsUrls):
+class TestGitLabGroupsApi(GitLabApiTestsCases.TestCRUD, MockUrls.MockGroupsUrls):
 
     def setUp(self):
         super().setUp()
@@ -123,9 +141,9 @@ class TestGitLabGroupsApi(GitLabApiTestsCases.TestCRUD, MockGroupsUrls):
         return GitLabContent.get_new_group_args()
 
     def test_groups_get_roots(self):
-        content = self.get_roots_content()
+        content = self.roots_content
 
-        with HTTMock(self.get_mock_list_url()):
+        with HTTMock(self.get_mock_for_list_url()):
             group_list = self.gitlab_api.groups.get_roots()
             self.assertGreater(len(group_list), 0)
             for group_info, group in zip(content, group_list):
@@ -139,13 +157,14 @@ class TestGitLabGroupsChildren(GitLabApiTestsCases.TestBase):
 
     def setUp(self):
         super().setUp()
-        mock_get_url = MockGroupsUrls().get_mock_get_url()
+        mock_get_url = MockUrls.MockGroupsUrls().get_mock_for_get_url()
         with HTTMock(mock_get_url):
             self._gitlab_groups = self.gitlab_api.groups.get(self._group_id)
 
 
 class TestGitLabGroupObjApi(TestGitLabGroupsChildren,
-                            GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockGroupObjUrls):
+                            GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
+                            MockUrls.MockGroupObjUrls):
 
     def setUp(self):
         super().setUp()
@@ -156,7 +175,7 @@ class TestGitLabGroupObjApi(TestGitLabGroupsChildren,
 
 
 class TestGitLabGroupSubgroupApi(TestGitLabGroupsChildren,
-                                 GitLabApiTestsCases.TestList, MockGroupSubgroupsUrls):
+                                 GitLabApiTestsCases.TestList, MockUrls.MockGroupSubgroupsUrls):
 
     def setUp(self):
         super().setUp()
@@ -164,7 +183,7 @@ class TestGitLabGroupSubgroupApi(TestGitLabGroupsChildren,
 
 
 class TestGitLabGroupProjectsApi(TestGitLabGroupsChildren,
-                                 GitLabApiTestsCases.TestList, MockGroupProjectsUrls):
+                                 GitLabApiTestsCases.TestList, MockUrls.MockGroupProjectsUrls):
 
     def setUp(self):
         super().setUp()
@@ -172,7 +191,8 @@ class TestGitLabGroupProjectsApi(TestGitLabGroupsChildren,
 
 
 class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
-                                GitLabApiTestsCases.TestCRUD, MockGroupMembersUrls):
+                                GitLabApiTestsCases.TestCRUD, GitLabApiTestsCases.TestAll,
+                                MockUrls.MockGroupMembersUrls):
 
     def setUp(self):
         super().setUp()
@@ -181,27 +201,11 @@ class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
     def get_create_args(self):
         return GitLabContent.get_new_group_member_args()
 
-    def _test_all(self, **kwargs):
-        content = self.get_all_content()
-
-        with HTTMock(self.get_mock_all_url()):
-            group_list = self._gitlab_api_mgr.all(**kwargs)
-            self.assertGreater(len(group_list), 0)
-            for group_info, group in zip(content, group_list):
-                for key, value in group_info.items():
-                    self.assertEqual(getattr(group, key), value)
-
-    def test_all(self):
-        self._test_all()
-
-    def test_all_single_content_element(self):
-        self._test_all(as_list=False)
-
     def test_external(self):
-        content_list = self.get_list_content()
-        content_all = self.get_all_content()
+        content_list = self.list_content
+        content_all = self.all_content
 
-        with HTTMock(self.get_mock_all_url(), self.get_mock_list_url()):
+        with HTTMock(self.get_mock_for_all_url(), self.get_mock_for_list_url()):
             group_ext = self._gitlab_api_mgr.external()
             self.assertGreater(len(group_ext), 0)
             for group in group_ext:
@@ -211,11 +215,11 @@ class TestGitLabGroupMembersApi(TestGitLabGroupsChildren,
 
 class TestGitLabGroupMemberObjApi(TestGitLabGroupsChildren,
                                   GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
-                                  MockGroupMemberObjUrls):
+                                  MockUrls.MockGroupMemberObjUrls):
 
     def setUp(self):
         super().setUp()
-        mock_get_url = MockGroupMembersUrls().get_mock_get_url()
+        mock_get_url = MockUrls.MockGroupMembersUrls().get_mock_for_get_url()
         with HTTMock(mock_get_url):
             self._gitlab_api_mgr = self._gitlab_groups.members.get(1)
 
@@ -223,7 +227,7 @@ class TestGitLabGroupMemberObjApi(TestGitLabGroupsChildren,
         super().test_save_obj(args={'access_level': self._gitlab_api_mgr.access_level})
 
 
-class TestGitLabUsersApi(GitLabApiTestsCases.TestCRUD, MockUsersUrls):
+class TestGitLabUsersApi(GitLabApiTestsCases.TestCRUD, MockUrls.MockUsersUrls):
 
     def setUp(self):
         super().setUp()
@@ -233,9 +237,9 @@ class TestGitLabUsersApi(GitLabApiTestsCases.TestCRUD, MockUsersUrls):
         return GitLabContent.get_new_user_args()
 
     def test_get_user_with_username(self):
-        content = self.get_get_content()
+        content = self.get_content
 
-        with HTTMock(self.get_mock_list_url()):
+        with HTTMock(self.get_mock_for_list_url()):
             obj = self._gitlab_api_mgr.get(username=content['username'])
             self.assertTrue(obj)
             for key, value in content.items():
@@ -248,7 +252,8 @@ class TestGitLabUsersApi(GitLabApiTestsCases.TestCRUD, MockUsersUrls):
         self.assertEqual(error.exception.get_error_dict(), {"username": ["Does not exist"]})
 
 
-class TestGitLabUserObjApi(GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockUserObjUrls):
+class TestGitLabUserObjApi(GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
+                           MockUrls.MockUserObjUrls):
     _user_id = 1
 
     def setUp(self):
@@ -260,7 +265,7 @@ class TestGitLabUserObjApi(GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.
             super().test_save_obj()
 
 
-class TestGitLabProjectsApi(GitLabApiTestsCases.TestCRUD, MockProjectsUrls):
+class TestGitLabProjectsApi(GitLabApiTestsCases.TestCRUD, MockUrls.MockProjectsUrls):
 
     def setUp(self):
         super().setUp()
@@ -275,13 +280,14 @@ class TestGitLabProjectChildren(GitLabApiTestsCases.TestBase):
 
     def setUp(self):
         super().setUp()
-        mock_get_url = MockProjectsUrls().get_mock_get_url()
+        mock_get_url = MockUrls.MockProjectsUrls().get_mock_for_get_url()
         with HTTMock(mock_get_url):
             self._gitlab_project = self.gitlab_api.projects.get(self._project_id)
 
 
 class TestGitLabProjectObjApi(TestGitLabProjectChildren,
-                              GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj, MockProjectObjUrls):
+                              GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
+                              MockUrls.MockProjectObjUrls):
 
     def setUp(self):
         super().setUp()
@@ -292,7 +298,8 @@ class TestGitLabProjectObjApi(TestGitLabProjectChildren,
 
 
 class TestGitLabProjectMembersApi(TestGitLabProjectChildren,
-                                  GitLabApiTestsCases.TestCRUD, MockProjectMembersUrls):
+                                  GitLabApiTestsCases.TestCRUD, GitLabApiTestsCases.TestAll,
+                                  MockUrls.MockProjectMembersUrls):
 
     def setUp(self):
         super().setUp()
@@ -301,27 +308,11 @@ class TestGitLabProjectMembersApi(TestGitLabProjectChildren,
     def get_create_args(self):
         return GitLabContent.get_new_project_member_args()
 
-    def _test_all(self, **kwargs):
-        content = self.get_all_content()
-
-        with HTTMock(self.get_mock_all_url()):
-            project_list = self._gitlab_api_mgr.all(**kwargs)
-            self.assertGreater(len(project_list), 0)
-            for project_info, project in zip(content, project_list):
-                for key, value in project_info.items():
-                    self.assertEqual(getattr(project, key), value)
-
-    def test_all(self):
-        self._test_all()
-
-    def test_all_single_content_element(self):
-        self._test_all(as_list=False)
-
     def test_external(self):
-        content_list = self.get_list_content()
-        content_all = self.get_all_content()
+        content_list = self.list_content
+        content_all = self.all_content
 
-        with HTTMock(self.get_mock_all_url(), self.get_mock_list_url()):
+        with HTTMock(self.get_mock_for_all_url(), self.get_mock_for_list_url()):
             project_ext = self._gitlab_api_mgr.external()
             self.assertGreater(len(project_ext), 0)
             for project in project_ext:
@@ -331,11 +322,11 @@ class TestGitLabProjectMembersApi(TestGitLabProjectChildren,
 
 class TestGitLabProjectMemberObjApi(TestGitLabProjectChildren,
                                     GitLabApiTestsCases.TestSaveObj, GitLabApiTestsCases.TestDeleteObj,
-                                    MockProjectMemberObjUrls):
+                                    MockUrls.MockProjectMemberObjUrls):
 
     def setUp(self):
         super().setUp()
-        mock_get_url = MockProjectMembersUrls().get_mock_get_url()
+        mock_get_url = MockUrls.MockProjectMembersUrls().get_mock_for_get_url()
         with HTTMock(mock_get_url):
             self._gitlab_api_mgr = self._gitlab_project.members.get(1)
 

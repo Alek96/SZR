@@ -1,8 +1,6 @@
 import gitlab
-from core.models import GitlabUser
+from GitLabApi.objects import GroupManager, UserManager, ProjectManager
 from django.conf import settings
-
-from GitLabApi.objects import *
 
 
 class GitLabApi:
@@ -14,5 +12,7 @@ class GitLabApi:
         self.projects = ProjectManager(self._gitlab.projects)
 
     def _get_gitlab_connection(self, user_id):
+        from core.models import GitlabUser
+
         gitlab_user = GitlabUser.objects.get(user_id=user_id)
         return gitlab.Gitlab(settings.SOCIAL_AUTH_GITLAB_API_URL, oauth_token=gitlab_user.get_access_token())

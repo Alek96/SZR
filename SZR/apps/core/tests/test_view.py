@@ -1,10 +1,10 @@
-import unittest
-from django.test import TestCase
-from django.urls import reverse, resolve
+import functools
+
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.test import TestCase
+from django.urls import reverse, resolve
 from social_django.models import UserSocialAuth
-import functools
 
 
 class UserCredentials:
@@ -86,6 +86,13 @@ class SimpleUrlsTestsCases:
 
         def get_url(self):
             return reverse(self.get_view_name(), kwargs=self.args)
+
+        def get_initial_form_data(self):
+            data = self.client.get(self.get_url()).context['form'].initial
+            for key, value in data.items():
+                if value is None:
+                    data[key] = ''
+            return data
 
         def test_get_url_from_name(self):
             url = self.get_url()

@@ -1,8 +1,9 @@
+import sys
 import unittest
-from django.test import TestCase
 
 from core.models import GitlabUser
-from core.utils import *
+from core.utils import captured_output, print_sql
+from django.test import TestCase
 
 
 class CapturedOutputTests(unittest.TestCase):

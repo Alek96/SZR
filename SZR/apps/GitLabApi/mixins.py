@@ -1,11 +1,11 @@
+from GitLabApi import exceptions
+from GitLabApi.base import RESTObject, RESTManager
+from gitlab import base as gl_base
 from gitlab import exceptions as gl_exceptions
-
-from GitLabApi.base import *
-from GitLabApi.exceptions import *
 
 
 class GetMixin(RESTManager):
-    @on_error(gl_exceptions.GitlabGetError, GitlabGetError)
+    @exceptions.on_error(gl_exceptions.GitlabGetError, exceptions.GitlabGetError)
     def get(self, id=None, **kwargs):
         """Retrieve a single object.
 
@@ -22,7 +22,7 @@ class GetMixin(RESTManager):
 
 
 class ListMixin(RESTManager):
-    @on_error(gl_exceptions.GitlabListError, GitlabListError)
+    @exceptions.on_error(gl_exceptions.GitlabListError, exceptions.GitlabListError)
     def list(self, **kwargs):
         """Retrieve a list of objects.
 
@@ -45,7 +45,7 @@ class ListMixin(RESTManager):
 
 
 class CreateMixin(RESTManager):
-    @on_error(gl_exceptions.GitlabCreateError, GitlabCreateError)
+    @exceptions.on_error(gl_exceptions.GitlabCreateError, exceptions.GitlabCreateError)
     def create(self, data, **kwargs):
         """Create a new object.
 
@@ -65,7 +65,7 @@ class CreateMixin(RESTManager):
 
 
 class UpdateMixin(RESTManager):
-    @on_error(gl_exceptions.GitlabUpdateError, GitlabUpdateError)
+    @exceptions.on_error(gl_exceptions.GitlabUpdateError, exceptions.GitlabUpdateError)
     def update(self, id=None, new_data={}, **kwargs):
         """Update an object on the server.
 
@@ -84,7 +84,7 @@ class UpdateMixin(RESTManager):
 
 
 class DeleteMixin(RESTManager):
-    @on_error(gl_exceptions.GitlabDeleteError, GitlabDeleteError)
+    @exceptions.on_error(gl_exceptions.GitlabDeleteError, exceptions.GitlabDeleteError)
     def delete(self, id, **kwargs):
         """Delete an object on the server.
 
@@ -102,8 +102,35 @@ class CRUDMixin(GetMixin, ListMixin, CreateMixin, UpdateMixin, DeleteMixin):
     pass
 
 
+class AllMixin(RESTManager):
+    @exceptions.on_error(gl_exceptions.GitlabListError, exceptions.GitlabListError)
+    def all(self, **kwargs):
+        """Retrieve a list of objects.
+        gitlab.v4.objects.GroupMemberManager.all() and gitlab.v4.objects.ProjectMemberManager.all()
+        returns dict, so we need convert them to objects, like in list method.
+        Code is copied from gitlab.mixins.ListMixin.list
+
+        :param
+            **kwargs: Extra options to send to the server (e.g. sudo)
+
+        :return
+            list: The list of objects
+
+        :raise
+            GitlabListError: If the list could not be retrieved
+        """
+        obj = self._rest_manager.all(**kwargs)
+
+        if isinstance(obj, list):
+            obj_list = [self._rest_manager._obj_cls(self._rest_manager, item) for item in obj]
+        else:
+            obj_list = gl_base.RESTObjectList(self._rest_manager, self._rest_manager._obj_cls, obj)
+
+        return [self._obj_cls(item) for item in obj_list]
+
+
 class ObjectDeleteMixin(RESTObject):
-    @on_error(gl_exceptions.GitlabDeleteError, GitlabDeleteError)
+    @exceptions.on_error(gl_exceptions.GitlabDeleteError, exceptions.GitlabDeleteError)
     def delete(self, **kwargs):
         """Delete the object from the server.
 
@@ -117,7 +144,7 @@ class ObjectDeleteMixin(RESTObject):
 
 
 class ObjectSaveMixin(RESTObject):
-    @on_error(gl_exceptions.GitlabUpdateError, GitlabUpdateError)
+    @exceptions.on_error(gl_exceptions.GitlabUpdateError, exceptions.GitlabUpdateError)
     def save(self, **kwargs):
         """Save the changes made to the object to the server.
         The object is updated to match what the server returns.

@@ -1,6 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-from celery import shared_task, Task
-from django.conf import settings
+from celery import Task
 from django.utils import timezone
 
 

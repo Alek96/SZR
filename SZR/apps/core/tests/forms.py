@@ -1,18 +1,25 @@
-from core.forms import *
+from core.forms import BaseForm, BaseTaskGroupForm, BaseTaskForm
 from core.tests.test_models import *
+from django import forms
 
 
-class FakeFormMethods(FormMethods):
-    name = forms.CharField(label='Name', max_length=50, initial='name')
-    path = forms.SlugField(label='Path', max_length=50, initial='path')
+class FakeBaseForm(BaseForm):
+    _readonly_fields = ['status']
 
-
-class FakeTaskForm(BaseTaskForm):
     class Meta:
-        model = FakeTask
-        fields = ['error_msg']
+        model = FakeTaskStatus
+        fields = ['status']
+
+    name = forms.CharField(label='Name', max_length=50, initial='name')
 
 
 class FakeTaskGroupForm(BaseTaskGroupForm):
     class Meta(BaseTaskGroupForm.Meta):
         model = FakeTaskGroup
+
+
+class FakeTaskForm(BaseTaskForm):
+    class Meta(BaseTaskForm.Meta):
+        model = FakeTask
+
+    name = forms.CharField(label='Name', max_length=50, initial='name')

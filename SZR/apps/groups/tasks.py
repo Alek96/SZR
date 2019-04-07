@@ -1,11 +1,11 @@
-from __future__ import absolute_import, unicode_literals
-
-from core.tasks import BaseTask
-from SZR.celery import app as celery_app
 from GitLabApi import GitLabApi
-from GitLabApi.exceptions import *
-from groups import models
+from GitLabApi.exceptions import GitlabGetError
 from core.exceptions import DoesNotContainGitlabId
+from core.models import GitlabUser
+from core.tasks import BaseTask
+from groups import models
+
+from SZR.celery import app as celery_app
 
 
 def create_subgroup(user_id, name, path, group_id=None, **kwargs):
@@ -75,7 +75,7 @@ class AddMemberTask(BaseTask):
             username=self._task.username,
             access_level=self._task.access_level
         )
-        self._task.new_gitlab_user, _ = models.GitlabUser.objects.get_or_create(gitlab_id=new_user_id)
+        self._task.new_gitlab_user, _ = GitlabUser.objects.get_or_create(gitlab_id=new_user_id)
 
 
 celery_app.register_task(AddMemberTask())

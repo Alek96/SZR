@@ -1,12 +1,17 @@
+import json
 import unittest
-from unittest import mock
-from django.test import TestCase
-from freezegun import freeze_time
 from pydoc import locate
+from unittest import mock
 
-from core.models import *
+from core.models import GitlabUser, ModelUrlsMethods
 from core.tasks import BaseTask
-from core.tests.models import *
+from core.tests.models import FakeTaskStatus, FakeTaskGroup, FakeTask, FakeRaiseTask, FakeRaiseTaskGroup
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.test import TestCase
+from django.utils import timezone
+from freezegun import freeze_time
+from social_django.models import UserSocialAuth
 
 
 class GitlabUserModelMethod:
@@ -87,16 +92,16 @@ class AbstractTaskStatus(TestCase):
 
 class ModelLinksMethodsTests(TestCase):
     def setUp(self):
-        self.model = ModelLinksMethods()
+        self.model = ModelUrlsMethods()
 
-    def test_link_to_edit(self):
-        self.assertEqual(self.model.link_to_edit, '#')
+    def test_edit_url(self):
+        self.assertEqual(self.model.edit_url, '#')
 
-    def test_link_to_delete(self):
-        self.assertEqual(self.model.link_to_delete, '#')
+    def test_delete_url(self):
+        self.assertEqual(self.model.delete_url, '#')
 
-    def test_link_to_tasks_page(self):
-        self.assertEqual(self.model.link_to_tasks_page, '#')
+    def test_tasks_page_url(self):
+        self.assertEqual(self.model.tasks_page_url, '#')
 
 
 class TaskGroupAndTaskMethods(TestCase):
@@ -127,9 +132,9 @@ class AbstractTaskGroupTests(TaskGroupAndTaskMethods):
         self.assertEqual(task_group.finished_tasks_number, 0)
         self.assertEqual(task_group.failed_task_number, 0)
 
-    def test_link_to_new_task(self):
+    def test_new_task_url(self):
         task_group = self.create_task_group()
-        self.assertEqual(task_group.link_to_new_task, '#')
+        self.assertEqual(task_group.new_task_url, '#')
 
     def test_status_ready(self):
         task_group = self.create_task_group(tasks_number=1)

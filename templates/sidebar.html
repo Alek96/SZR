@@ -18,94 +18,58 @@
         <nav id="sidebar" class="sidebar-wrapper">
             <div class="sidebar-content">
                 <div class="sidebar-brand">
-                    <a href="#">{% block sidebar-title %}Title{% endblock %}</a>
+                    <a href="#">{{ sidebar.title }}</a>
                     <div id="close-sidebar">
                         <i class="fas fa-angle-double-left"></i>
                     </div>
                 </div>
                 <!-- sidebar-content  -->
                 {% block sidebar-menu %}
-                    <div class="sidebar-search">
-                        <div>
-                            <div class="input-group">
-                                <input type="text" class="form-control search-menu" placeholder="Search...">
-                                <div class="input-group-append">
+                    {% if sidebar.search %}
+                        <div class="sidebar-search">
+                            <div>
+                                <div class="input-group">
+                                    <input type="text" class="form-control search-menu" placeholder="Search...">
+                                    <div class="input-group-append">
                             <span class="input-group-text">
                                 <i class="fa fa-search" aria-hidden="true"></i>
                             </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <!-- sidebar-search  -->
+                        <!-- sidebar-search  -->
+                    {% endif %}
                     <div class="sidebar-menu">
                         <ul>
                             <li class="header-menu">
-                                <span>Menu</span>
+                                <span>{{ sidebar.name }}</span>
                             </li>
-                            <li class="sidebar-dropdown active">
-                                <a href="#">
-                                    <i class="fa fa-home"></i>
-                                    <span>Overview</span>
-                                    <span class="badge badge-pill badge-warning">New</span>
-                                </a>
-                                <div class="sidebar-submenu" style="display:block;">
-                                    <ul>
-                                        <li>
-                                            <a href="#">Details
-                                                <span class="badge badge-pill badge-success">Pro</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li class="sidebar-dropdown">
-                                <a href="#">
-                                    <i class="fa fa-users"></i>
-                                    <span>Members</span>
-                                </a>
-                                <div class="sidebar-submenu">
-                                    <ul>
-                                        <li>
-                                            <a href="#">General</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Panels</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Tables</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Icons</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Forms</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li class="sidebar-dropdown">
-                                <a href="#">
-                                    <i class="fa fa-cog"></i>
-                                    <span>Setting</span>
-                                </a>
-                                <div class="sidebar-submenu">
-                                    <ul>
-                                        <li>
-                                            <a href="#">Pie chart</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Line chart</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Bar chart</a>
-                                        </li>
-                                        <li>
-                                            <a href="#">Histogram</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
+                            {% autoescape off %}
+                                {% for point in sidebar.points %}
+                                    <li class="sidebar-dropdown {% if point.active %}active{% endif %}">
+                                        <a {{ point.url }}>
+                                            {{ point.icon }}
+                                            <span>{{ point.name }}</span>
+                                            {{ point.badge }}
+                                        </a>
+                                        <div class="sidebar-submenu"
+                                             {% if point.active %}style="display:block;"{% endif %}>
+                                            <ul>
+                                                {% for sub_point in point.sub_points %}
+                                                    <li>
+                                                        <a {{ sub_point.url }}>
+                                                            {{ sub_point.icon }}
+                                                            <span>{{ sub_point.name }}</span>
+                                                            {{ point.badge }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            {% endautoescape %}
                         </ul>
                     </div>
                     <!-- sidebar-menu  -->

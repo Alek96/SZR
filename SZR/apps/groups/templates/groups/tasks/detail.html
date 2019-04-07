@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/group_list.css' %}"/>
 {% endblock %}
 
+
 {% block sidebar-menu %}
     {{ block.super }}
 {% endblock %}
@@ -27,12 +28,12 @@
                         <a href="#" class="badge badge-success">New Project</a>
                     </div>
                     <div class="button-new-group">
-                        <a href="{% url 'groups:new_group' %}" class="badge badge-success">New Group</a>
+                        {#                        <a href="{% url 'groups:new_group' %}" class="badge badge-success">New Group</a>#}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% include 'groups/group_list.html' with group_list=group.subgroups.list project_list=group.projects.list %}
+    {#    {% include 'groups/group_list.html' with group_list=group.subgroups.list project_list=group.projects.list %}#}
 {% endblock %}
 

@@ -1,14 +1,12 @@
-import unittest
-from unittest import mock
-from django.test import TestCase
-from django.utils import timezone
 import json
-from freezegun import freeze_time
+from unittest import mock
 
-from core.models import *
-from core.tests.tasks import *
+from core.tasks import BaseTask
 from core.tests import models
+from core.tests.tasks import FakeTask
 from core.tests.test_models import TaskGroupAndTaskMethods
+from django.utils import timezone
+from freezegun import freeze_time
 
 
 class BaseTaskTests(TaskGroupAndTaskMethods):
