@@ -39,6 +39,7 @@ def detail(request, group_id):
     group = GitLabApi(request.user.id).groups.get(group_id)
     context = {
         'group': group,
+        "active": 'overwiev',
     }
     return render(request, 'groups/detail.html', context)
 
@@ -48,6 +49,7 @@ def members(request, group_id):
     group = GitLabApi(request.user.id).groups.get(group_id)
     context = {
         'group': group,
+        "active": 'members'
     }
     return render(request, 'groups/members.html', context)
 
@@ -65,6 +67,7 @@ def tasks(request, group_id):
         'unfinished_task_list': gitlab_group.get_unfinished_task_list(),
         'finished_task_list': gitlab_group.get_finished_task_list(),
         'new_group_links': new_group_links,
+        'active': 'tasks'
     }
     return render(request, 'groups/tasks.html', context)
 

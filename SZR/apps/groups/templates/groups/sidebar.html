@@ -3,7 +3,6 @@
 
 {% block title %}sidebar{% endblock %}
 
-
 {% block sidebar-title %}
     Group Title
 {% endblock %}
@@ -28,56 +27,84 @@
             <li class="header-menu">
                 <span>Group Menu</span>
             </li>
-            <li class="sidebar-dropdown active">
-                <a href="#">
-                    <i class="fa fa-home"></i>
-                    <span>Overview</span>
-                </a>
-                <div class="sidebar-submenu" style="display:block;">
-                    <ul>
-                        <li>
-                            <a href="{% url 'groups:detail' group.id %}">Details</a>
-                        </li>
-                        <li>
-                            <a target="_blank" rel="noopener noreferrer" href="{{ group.web_url }}">
-                                GitLab
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-            <li class="sidebar-dropdown">
-                <a href="#">
-                    <i class="fa fa-users"></i>
-                    <span>Members</span>
-                </a>
-                <div class="sidebar-submenu">
-                    <ul>
-                        <li>
-                            <a href="{% url 'groups:members' group.id %}">Details</a>
-                        </li>
-                        <li>
-                            <a href="#">Add Members</a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
-            <li class="sidebar-dropdown">
-                <a href="#">
-                    <i class="fa fa-tasks"></i>
-                    <span>Tasks</span>
-                </a>
-                <div class="sidebar-submenu">
-                    <ul>
-                        <li>
-                            <a href="{% url 'groups:tasks' group.id %}">Details</a>
-                        </li>
-                        <li>
-                            <a href="#">Add Task</a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
+            
+            {% if active == 'overwiev' %}
+                <li class="sidebar-dropdown active">
+            {% else %}
+                <li class="sidebar-dropdown">
+            {% endif %}
+                    <a href="#">
+                        <i class="fa fa-home"></i>
+                        <span>Overview</span>
+                    </a>
+                    {% if active == 'overwiev' %}
+                        <div class="sidebar-submenu" style="display:block;">
+                    {% else %}
+                        <div class="sidebar-submenu">
+                    {% endif %}
+                            <ul>
+                                <li>
+                                    <a href="{% url 'groups:detail' group.id %}">Details</a>
+                                </li>
+                                <li>
+                                    <a target="_blank" rel="noopener noreferrer" href="{{ group.web_url }}">
+                                        GitLab
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                </li>
+
+            {% if active == 'members' %}
+                <li class="sidebar-dropdown active">
+            {% else %}
+                <li class="sidebar-dropdown">
+            {% endif %}
+                    <a href="#">
+                        <i class="fa fa-users"></i>
+                        <span>Members</span>
+                    </a>
+                    {% if active == 'members' %}
+                        <div class="sidebar-submenu" style="display:block;">
+                    {% else %}
+                        <div class="sidebar-submenu">
+                    {% endif %}
+                            <ul>
+                                <li>
+                                    <a href="{% url 'groups:members' group.id %}">Details</a>
+                                </li>
+                                <li>
+                                    <a href="#">Add Members</a>
+                                </li>
+                            </ul>
+                        </div>
+                </li>
+
+            {% if active == 'tasks' %}
+                <li class="sidebar-dropdown active">
+            {% else %}
+                <li class="sidebar-dropdown">
+            {% endif %}
+                    <a href="#">
+                        <i class="fa fa-tasks"></i>
+                        <span>Tasks</span>
+                    </a>
+                {% if active == 'tasks' %}
+                    <div class="sidebar-submenu" style="display:block;">
+                {% else %}
+                    <div class="sidebar-submenu">
+                {% endif %}
+                        <ul>
+                            <li>
+                                <a href="{% url 'groups:tasks' group.id %}">Details</a>
+                            </li>
+                            <li>
+                                <a href="#">Add Task</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+
             <li class="sidebar-dropdown">
                 <a href="#">
                     <i class="fa fa-cog"></i>
