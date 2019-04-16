@@ -19,26 +19,22 @@ class GitlabGroupModelUnitTests(TestCase):
 
     def _prepare_task_groups(self, create_class, gitlab_group):
         task_group_list = [
-            create_class().create_task_group(
+            create_class().create_task(
                 gitlab_group=gitlab_group,
-                status=models.AddSubgroupGroup.WAITING),
-            create_class().create_task_group(
+                status=models.AddSubgroup.WAITING),
+            create_class().create_task(
                 gitlab_group=gitlab_group,
-                tasks_number=1),
-            create_class().create_task_group(
+                status=models.AddSubgroup.READY),
+            create_class().create_task(
                 gitlab_group=gitlab_group,
-                tasks_number=2,
-                finished_tasks_number=1),
-            create_class().create_task_group(
+                status=models.AddSubgroup.RUNNING),
+            create_class().create_task(
                 gitlab_group=gitlab_group,
-                tasks_number=1,
-                finished_tasks_number=1,
+                status=models.AddSubgroup.SUCCEED,
                 finished_date=timezone.now()),
-            create_class().create_task_group(
+            create_class().create_task(
                 gitlab_group=gitlab_group,
-                tasks_number=1,
-                finished_tasks_number=1,
-                failed_task_number=1,
+                status=models.AddSubgroup.FAILED,
                 finished_date=timezone.now()),
         ]
         # check statuses
@@ -131,30 +127,47 @@ class GitlabGroupModelUnitTests(TestCase):
         self.assertEqual(finished_task_list[3].id, member_list[4].id)
 
 
-class AbstractTaskGroupCreateMethods(core_test_models.TaskGroupAndTaskMethods):
-    def create_task_group(self, name='name', parent_task=None, gitlab_group=None, **kwargs):
-        return test_models.FakeTaskGroup.objects.create(
+class TaskGroupMethods(core_test_models.TaskGroupMethods):
+    def create_task_group(self, name='Name', gitlab_group=None, parent_task=None, **kwargs):
+        return models.TaskGroup.objects.create(
             name=name,
             gitlab_group=gitlab_group or (None if parent_task else models.GitlabGroup.objects.create()),
             parent_task=parent_task,
             **kwargs
         )
 
-    def create_task(self, owner=None, task_group=None, new_gitlab_group=None, **kwargs):
-        return test_models.FakeAddSubgroup.objects.create(
+
+class AbstractTaskCreateMethods(TaskGroupMethods, core_test_models.TaskMethods):
+    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, **kwargs):
+        return test_models.FakeTask.objects.create(
             owner=owner or core_models.GitlabUser.objects.create(),
-            task_group=task_group or getattr(self, 'task_group', self.create_task_group()),
-            new_gitlab_group=new_gitlab_group,
+            task_group=task_group,
+            gitlab_group=gitlab_group or (None if (task_group or parent_task) else models.GitlabGroup.objects.create()),
+            parent_task=parent_task,
             **kwargs
         )
 
     def create_parent_task(self, **kwargs):
-        return self.create_task(
-            task_group=self.create_task_group()
-        )
+        return AddSubgroupCreateMethods().create_task(**kwargs)
 
 
-class AbstractTaskGroupTests(AbstractTaskGroupCreateMethods, core_test_models.AbstractTaskGroupTests):
+class TaskGroupTests(AbstractTaskCreateMethods, core_test_models.AbstractTaskGroupTests):
+    def test_creating_with_gitlab_group_and_parent_task_raise_error(self):
+        gitlab_group = models.GitlabGroup.objects.create()
+        parent_task = self.create_parent_task()
+        with self.assertRaises(ValidationError):
+            self.create_task_group(gitlab_group=gitlab_group, parent_task=parent_task)
+
+    def test_edit_url(self):
+        task_group = self.create_task_group()
+        self.assertEqual(
+            task_group.edit_url,
+            reverse('groups:edit_task_group', kwargs={'task_group_id': task_group.id}))
+
+    def test_delete_url(self):
+        task_group = self.create_task_group()
+        self.assertEqual(task_group.delete_url, '#')
+
     def test_tasks_page_url_points_tasks(self):
         task_group = self.create_task_group(
             gitlab_group=models.GitlabGroup.objects.create(gitlab_id=1)
@@ -171,74 +184,80 @@ class AbstractTaskGroupTests(AbstractTaskGroupCreateMethods, core_test_models.Ab
             task_group.tasks_page_url,
             reverse('groups:future_group_tasks', kwargs={'task_id': parent_task.id}))
 
-    def test_creating_with_parent_task_and_gitlab_groups_raise_error(self):
+
+class AbstractTaskTests(AbstractTaskCreateMethods, core_test_models.AbstractTaskTests):
+    def test_creating_with_gitlab_group_and_task_group_raise_error(self):
+        gitlab_group = models.GitlabGroup.objects.create()
+        task_group = self.create_task_group()
         with self.assertRaises(ValidationError):
-            self.create_task_group(
-                parent_task=self.create_parent_task(),
-                gitlab_group=models.GitlabGroup.objects.create()
-            )
+            self.create_task(gitlab_group=gitlab_group, task_group=task_group)
+
+    def test_creating_with_gitlab_group_and_parent_task_raise_error(self):
+        gitlab_group = models.GitlabGroup.objects.create()
+        parent_task = self.create_parent_task()
+        with self.assertRaises(ValidationError):
+            self.create_task(gitlab_group=gitlab_group, parent_task=parent_task)
+
+    def test_tasks_page_url_points_tasks(self):
+        task = self.create_task(
+            gitlab_group=models.GitlabGroup.objects.create(gitlab_id=1)
+        )
+        self.assertEqual(
+            task.tasks_page_url,
+            reverse('groups:tasks', kwargs={'group_id': task.gitlab_group.gitlab_id}))
+
+    def test_tasks_page_url_points_future_tasks(self):
+        parent_task = self.create_parent_task()
+        task = self.create_task(parent_task=parent_task)
+
+        self.assertEqual(
+            task.tasks_page_url,
+            reverse('groups:future_group_tasks', kwargs={'task_id': parent_task.id}))
 
     def test_creating_with_parent_task_set_gitlab_group(self):
         parent_task = self.create_parent_task()
+        task = self.create_task(parent_task=parent_task)
+        self.assertEqual(task.gitlab_group, parent_task.new_gitlab_group)
+
+    def test_creating_with_task_group_set_gitlab_group(self):
+        task_group = self.create_task_group()
+        task = self.create_task(task_group=task_group)
+        self.assertEqual(task.gitlab_group, task_group.gitlab_group)
+
+    def test_creating_with_task_group_set_parent_task_if_exist(self):
+        parent_task = self.create_parent_task()
         task_group = self.create_task_group(parent_task=parent_task)
-        self.assertEqual(task_group.gitlab_group, parent_task.new_gitlab_group)
+        task = self.create_task(task_group=task_group)
+        self.assertEqual(task.parent_task.id, parent_task.id)
 
 
-class AbstractAddSubgroupTests(AbstractTaskGroupCreateMethods, core_test_models.AbstractTaskTests):
-    def test_creating_with_new_gitlab_group_does_not_create_new_gitlab_group(self):
-        gitlab_group = models.GitlabGroup.objects.create()
-        task = self.create_task(
-            new_gitlab_group=gitlab_group
-        )
-        self.assertEqual(task.new_gitlab_group, gitlab_group)
-
-
-class AddSubgroupCreateMethods(core_test_models.TaskGroupAndTaskMethods):
-    def create_task_group(self, name='name', parent_task=None, gitlab_group=None, **kwargs):
-        return models.AddSubgroupGroup.objects.create(
-            name=name,
-            gitlab_group=gitlab_group or (None if parent_task else models.GitlabGroup.objects.create()),
-            parent_task=parent_task,
-            **kwargs
-        )
-
-    def create_task(self, owner=None, task_group=None, new_gitlab_group=None, name='name', path='path', **kwargs):
+class AddSubgroupCreateMethods(TaskGroupMethods, core_test_models.TaskMethods):
+    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, name='name', path='path',
+                    **kwargs):
         return models.AddSubgroup.objects.create(
             owner=owner or core_models.GitlabUser.objects.create(),
-            task_group=task_group or getattr(self, 'task_group', self.create_task_group()),
-            new_gitlab_group=new_gitlab_group,
+            task_group=task_group,
+            gitlab_group=gitlab_group or (None if (task_group or parent_task) else models.GitlabGroup.objects.create()),
+            parent_task=parent_task,
             name=name,
             path=path,
             **kwargs
         )
 
     def create_parent_task(self, **kwargs):
-        return self.create_task(
-            task_group=self.create_task_group()
-        )
-
-
-class AddSubgroupGroupTests(AddSubgroupCreateMethods, AbstractTaskGroupTests):
-    def test_edit_url(self):
-        task_group = self.create_task_group()
-        self.assertEqual(
-            task_group.edit_url,
-            reverse('groups:edit_subgroup_group', kwargs={'task_group_id': task_group.id}))
-
-    def test_delete_url(self):
-        task_group = self.create_task_group()
-        self.assertEqual(task_group.delete_url, '#')
-
-    def test_new_task_url(self):
-        task_group = self.create_task_group(
-            gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)
-        )
-        self.assertEqual(
-            task_group.new_task_url,
-            reverse('groups:new_subgroup_task', kwargs={'task_group_id': task_group.id}))
+        return AddSubgroupCreateMethods().create_task(**kwargs)
 
 
 class AddSubgroupTests(AddSubgroupCreateMethods, core_test_models.AbstractTaskTests):
+    def test_init_create_new_gitlab_group_if_does_not_exist(self):
+        task = self.create_task()
+        self.assertTrue(task.new_gitlab_group)
+
+    def test_init_does_not_create_new_gitlab_group_if_it_exists(self):
+        gitlab_group = models.GitlabGroup.objects.create()
+        task = self.create_task(new_gitlab_group=gitlab_group)
+        self.assertEqual(task.new_gitlab_group.id, gitlab_group.id)
+
     def test_task_name(self):
         task = self.create_task()
         self.assertEqual(task.task_name, 'Create subgroup: {}'.format(task.name))
@@ -253,65 +272,18 @@ class AddSubgroupTests(AddSubgroupCreateMethods, core_test_models.AbstractTaskTe
         task = self.create_task()
         self.assertEqual(task.delete_url, '#')
 
-    def test_tasks_page_url_points_tasks(self):
-        task = self.create_task(
-            task_group=self.create_task_group(
-                gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)))
 
-        self.assertEqual(
-            task.tasks_page_url,
-            reverse('groups:tasks', kwargs={'group_id': task.task_group.gitlab_group.gitlab_id}))
-
-    def test_tasks_page_url_points_future_tasks(self):
-        parent_task = self.create_parent_task()
-        task = self.create_task(
-            task_group=self.create_task_group(
-                parent_task=parent_task))
-
-        self.assertEqual(
-            task.tasks_page_url,
-            reverse('groups:future_group_tasks', kwargs={'task_id': parent_task.id}))
-
-
-class AddMemberCreateMethods(core_test_models.TaskGroupAndTaskMethods):
-    def create_task_group(self, name='name', parent_task=None, gitlab_group=None, **kwargs):
-        return models.AddMemberGroup.objects.create(
-            name=name,
-            gitlab_group=gitlab_group or (None if parent_task else models.GitlabGroup.objects.create()),
-            parent_task=parent_task,
-            **kwargs
-        )
-
-    def create_task(self, owner=None, task_group=None, username='username', **kwargs):
+class AddMemberCreateMethods(AbstractTaskCreateMethods):
+    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, username='username',
+                    **kwargs):
         return models.AddMember.objects.create(
             owner=owner or core_models.GitlabUser.objects.create(),
-            task_group=task_group or getattr(self, 'task_group', self.create_task_group()),
+            task_group=task_group,
+            gitlab_group=gitlab_group or (None if (task_group or parent_task) else models.GitlabGroup.objects.create()),
+            parent_task=parent_task,
             username=username,
             **kwargs
         )
-
-    def create_parent_task(self, **kwargs):
-        return AddSubgroupCreateMethods().create_task()
-
-
-class AddMemberGroupsTests(AddMemberCreateMethods, AbstractTaskGroupTests):
-    def test_link_to_edit(self):
-        task_group = self.create_task_group()
-        self.assertEqual(
-            task_group.edit_url,
-            reverse('groups:edit_member_group', kwargs={'task_group_id': task_group.id}))
-
-    def test_delete_url(self):
-        task_group = self.create_task_group()
-        self.assertEqual(task_group.delete_url, '#')
-
-    def test_new_task_url(self):
-        task_group = self.create_task_group(
-            gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)
-        )
-        self.assertEqual(
-            task_group.new_task_url,
-            reverse('groups:new_member_task', kwargs={'task_group_id': task_group.id}))
 
 
 class AddMemberTests(AddMemberCreateMethods, core_test_models.AbstractTaskTests):
@@ -328,22 +300,3 @@ class AddMemberTests(AddMemberCreateMethods, core_test_models.AbstractTaskTests)
     def test_delete_url(self):
         task = self.create_task()
         self.assertEqual(task.delete_url, '#')
-
-    def test_tasks_page_url_points_tasks(self):
-        task = self.create_task(
-            task_group=self.create_task_group(
-                gitlab_group=models.GitlabGroup.objects.create(gitlab_id=42)))
-
-        self.assertEqual(
-            task.tasks_page_url,
-            reverse('groups:tasks', kwargs={'group_id': task.task_group.gitlab_group.gitlab_id}))
-
-    def test_tasks_page_url_points_future_tasks(self):
-        parent_task = self.create_parent_task()
-        task = self.create_task(
-            task_group=self.create_task_group(
-                parent_task=parent_task))
-
-        self.assertEqual(
-            task.tasks_page_url,
-            reverse('groups:future_group_tasks', kwargs={'task_id': parent_task.id}))

@@ -46,11 +46,14 @@ class GroupSidebar(sidebar.Sidebar):
                         name='Details',
                         url=sidebar.Url(url=reverse('groups:tasks', kwargs={'group_id': group.id}))),
                     sidebar.Point(
+                        name='New Task Group',
+                        url=sidebar.Url(url=reverse('groups:new_task_group', kwargs={'group_id': group.id}))),
+                    sidebar.Point(
                         name='Add Subgroups',
-                        url=sidebar.Url(url=reverse('groups:new_subgroup_group', kwargs={'group_id': group.id}))),
+                        url=sidebar.Url(url=reverse('groups:new_subgroup_task', kwargs={'group_id': group.id}))),
                     sidebar.Point(
                         name='Add Members',
-                        url=sidebar.Url(url=reverse('groups:new_member_group', kwargs={'group_id': group.id}))),
+                        url=sidebar.Url(url=reverse('groups:new_member_task', kwargs={'group_id': group.id}))),
                 ]),
             sidebar.Point(
                 name='Setting',
@@ -84,7 +87,7 @@ class FutureGroupSidebar(sidebar.Sidebar):
                         url=sidebar.Url(url=reverse('groups:future_group_detail', kwargs={'task_id': task.id}))),
                     sidebar.Point(
                         name='Add Subgroups',
-                        url=sidebar.Url(url=reverse('groups:new_subgroup_group', kwargs={'task_id': task.id}))),
+                        url=sidebar.Url(url=reverse('groups:new_subgroup_task', kwargs={'task_id': task.id}))),
                 ]),
             sidebar.Point(
                 name='Members',
@@ -95,7 +98,7 @@ class FutureGroupSidebar(sidebar.Sidebar):
                         url=sidebar.Url(url=reverse('groups:future_group_members', kwargs={'task_id': task.id}))),
                     sidebar.Point(
                         name='Add Members',
-                        url=sidebar.Url(url=reverse('groups:new_member_group', kwargs={'task_id': task.id}))),
+                        url=sidebar.Url(url=reverse('groups:new_member_task', kwargs={'task_id': task.id}))),
                 ]),
             sidebar.Point(
                 name='Tasks',
@@ -105,11 +108,14 @@ class FutureGroupSidebar(sidebar.Sidebar):
                         name='Details',
                         url=sidebar.Url(url=reverse('groups:future_group_tasks', kwargs={'task_id': task.id}))),
                     sidebar.Point(
+                        name='New Task Group',
+                        url=sidebar.Url(url=reverse('groups:new_task_group', kwargs={'task_id': task.id}))),
+                    sidebar.Point(
                         name='Add Subgroups',
-                        url=sidebar.Url(url=reverse('groups:new_subgroup_group', kwargs={'task_id': task.id}))),
+                        url=sidebar.Url(url=reverse('groups:new_subgroup_task', kwargs={'task_id': task.id}))),
                     sidebar.Point(
                         name='Add Members',
-                        url=sidebar.Url(url=reverse('groups:new_member_group', kwargs={'task_id': task.id}))),
+                        url=sidebar.Url(url=reverse('groups:new_member_task', kwargs={'task_id': task.id}))),
                 ]),
             sidebar.Point(
                 name='Setting',

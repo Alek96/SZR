@@ -3,25 +3,35 @@ from groups import models
 from groups import tasks
 
 
-class BaseTaskGroupForm(forms.BaseTaskGroupForm):
-    _parent_task_model = models.AddSubgroup
+class TaskGroupForm(forms.BaseTaskGroupForm):
+    class Meta(forms.BaseTaskGroupForm.Meta):
+        model = models.TaskGroup
 
-    def _save(self, model, group_id=None, task_id=None, **kwargs):
-        super()._save(model=model, group_id=group_id, **kwargs)
-        if task_id:
-            model.parent_task = self._parent_task_model.objects.get(id=task_id)
+    def _save(self, model, group_id=None, parent_task=None, **kwargs):
+        super()._save(model=model, group_id=group_id, parent_task=parent_task, **kwargs)
+        if parent_task and group_id:
+            raise ValueError("group_id and task_id cannot be specified at the same time")
+
+        if parent_task:
+            model.parent_task = parent_task
         elif group_id:
             model.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
         else:
             raise ValueError("group_id or task_id must be specified")
 
 
-class AddSubgroupGroupForm(BaseTaskGroupForm):
-    class Meta(BaseTaskGroupForm.Meta):
-        model = models.AddSubgroupGroup
+class BaseTaskForm(forms.BaseTaskForm):
+    def _save(self, model, group_id=None, parent_task=None, **kwargs):
+        super()._save(model=model, group_id=group_id, parent_task=parent_task, **kwargs)
+        if not group_id and not parent_task and not model.task_group:
+            raise ValueError("group_id, parent_task or task_group must be specified")
+
+        model.parent_task = parent_task
+        if group_id:
+            model.gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
 
 
-class AddSubgroupForm(forms.BaseTaskForm):
+class AddSubgroupForm(BaseTaskForm):
     class Meta(forms.BaseTaskForm.Meta):
         model = models.AddSubgroup
         fields = ['name', 'path', 'description', 'visibility'] + forms.BaseTaskForm.Meta.fields
@@ -38,12 +48,7 @@ class AddSubgroupForm(forms.BaseTaskForm):
             **kwargs)
 
 
-class AddMemberGroupForm(BaseTaskGroupForm):
-    class Meta(BaseTaskGroupForm.Meta):
-        model = models.AddMemberGroup
-
-
-class AddMemberForm(forms.BaseTaskForm):
+class AddMemberForm(BaseTaskForm):
     class Meta(forms.BaseTaskForm.Meta):
         model = models.AddMember
         fields = ['username', 'access_level'] + forms.BaseTaskForm.Meta.fields

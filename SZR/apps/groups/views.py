@@ -59,8 +59,9 @@ def tasks(request, group_id):
     group = GitLabApi(request.user.id).groups.get(group_id)
     gitlab_group, _ = models.GitlabGroup.objects.get_or_create(gitlab_id=group_id)
     new_group_links = [
-        ('New Subgroup Group', reverse('groups:new_subgroup_group', kwargs={'group_id': group_id})),
-        ('New Member Group', reverse('groups:new_member_group', kwargs={'group_id': group_id}))
+        ('New Task Group', reverse('groups:new_task_group', kwargs={'group_id': group_id})),
+        ('New Subgroup', reverse('groups:new_subgroup_task', kwargs={'group_id': group_id})),
+        ('New Member', reverse('groups:new_member_task', kwargs={'group_id': group_id}))
     ]
     context = {
         'group': group,
@@ -105,17 +106,16 @@ def new_subgroup(request, group_id):
 
 
 @login_required
-def new_subgroup_group(request, group_id=None, task_id=None):
-    if task_id:
-        get_object_or_404(models.AddSubgroup, id=task_id)
-    form = forms.AddSubgroupGroupForm(request.POST or None)
+def new_task_group(request, group_id=None, task_id=None):
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
+    form = forms.TaskGroupForm(request.POST or None)
     context = {
         "form": form,
-        "page_title": 'Add Subgroup Group',
-        "fields_title": 'Add Subgroup Group',
+        "page_title": 'Add Task Group',
+        "fields_title": 'Add Task Group',
     }
     try:
-        model = form.save(group_id=group_id, task_id=task_id)
+        model = form.save(group_id=group_id, parent_task=parent_task)
     except FormNotValidError:
         return render(request, 'groups/form_base_site.html', context)
     else:
@@ -123,13 +123,13 @@ def new_subgroup_group(request, group_id=None, task_id=None):
 
 
 @login_required
-def edit_subgroup_group(request, task_group_id):
-    task_group = get_object_or_404(models.AddSubgroupGroup, id=task_group_id)
-    form = forms.AddSubgroupGroupForm(request.POST or None, instance=task_group)
+def edit_task_group(request, task_group_id):
+    task_group = get_object_or_404(models.TaskGroup, id=task_group_id)
+    form = forms.TaskGroupForm(request.POST or None, instance=task_group)
     context = {
         "form": form,
-        "page_title": 'Edit Subgroup Group',
-        "fields_title": 'Edit Subgroup Group',
+        "page_title": 'Edit Task Group',
+        "fields_title": 'Edit Task Group',
     }
     try:
         model = form.update()
@@ -140,8 +140,9 @@ def edit_subgroup_group(request, task_group_id):
 
 
 @login_required
-def new_subgroup_task(request, task_group_id):
-    get_object_or_404(models.AddSubgroupGroup, id=task_group_id)
+def new_subgroup_task(request, group_id=None, task_group_id=None, task_id=None):
+    task_group = get_object_or_404(models.TaskGroup, id=task_group_id) if task_group_id else None
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
     form = forms.AddSubgroupForm(request.POST or None)
     context = {
         "form": form,
@@ -149,7 +150,7 @@ def new_subgroup_task(request, task_group_id):
         "fields_title": 'Add Subgroup Task',
     }
     try:
-        model = form.save(user_id=request.user.id, task_group_id=task_group_id)
+        model = form.save(user_id=request.user.id, group_id=group_id, task_group=task_group, parent_task=parent_task)
     except FormNotValidError:
         return render(request, 'groups/form_base_site.html', context)
     else:
@@ -190,43 +191,9 @@ def new_member(request, group_id):
 
 
 @login_required
-def new_member_group(request, group_id=None, task_id=None):
-    if task_id:
-        get_object_or_404(models.AddSubgroup, id=task_id)
-    form = forms.AddMemberGroupForm(request.POST or None)
-    context = {
-        "form": form,
-        "page_title": 'Add Member Group',
-        "fields_title": 'Add Member Group',
-    }
-    try:
-        model = form.save(group_id=group_id, task_id=task_id)
-    except FormNotValidError:
-        return render(request, 'groups/form_base_site.html', context)
-    else:
-        return HttpResponseRedirect(model.tasks_page_url)
-
-
-@login_required
-def edit_member_group(request, task_group_id):
-    task_group = get_object_or_404(models.AddMemberGroup, id=task_group_id)
-    form = forms.AddMemberGroupForm(request.POST or None, instance=task_group)
-    context = {
-        "form": form,
-        "page_title": 'Edit Member Group',
-        "fields_title": 'Edit Member Group',
-    }
-    try:
-        model = form.update()
-    except FormNotValidError:
-        return render(request, 'groups/form_base_site.html', context)
-    else:
-        return HttpResponseRedirect(model.tasks_page_url)
-
-
-@login_required
-def new_member_task(request, task_group_id):
-    get_object_or_404(models.AddMemberGroup, id=task_group_id)
+def new_member_task(request, group_id=None, task_group_id=None, task_id=None):
+    task_group = get_object_or_404(models.TaskGroup, id=task_group_id) if task_group_id else None
+    parent_task = get_object_or_404(models.AddMember, id=task_id) if task_id else None
     form = forms.AddMemberForm(request.POST or None)
     context = {
         "form": form,
@@ -234,7 +201,7 @@ def new_member_task(request, task_group_id):
         "fields_title": 'Add Member Task',
     }
     try:
-        model = form.save(user_id=request.user.id, task_group_id=task_group_id)
+        model = form.save(user_id=request.user.id, group_id=group_id, task_group=task_group, parent_task=parent_task)
     except FormNotValidError:
         return render(request, 'groups/form_base_site.html', context)
     else:
@@ -287,8 +254,9 @@ def future_group_tasks(request, task_id):
     task = get_object_or_404(models.AddSubgroup, id=task_id)
     gitlab_group = task.new_gitlab_group
     new_group_links = [
-        ('New Subgroup Group', reverse('groups:new_subgroup_group', kwargs={'task_id': task_id})),
-        ('New Member Group', reverse('groups:new_member_group', kwargs={'task_id': task_id}))
+        ('New Task Group', reverse('groups:new_task_group', kwargs={'task_id': task_id})),
+        ('New Subgroup', reverse('groups:new_subgroup_task', kwargs={'task_id': task_id})),
+        ('New Member', reverse('groups:new_member_task', kwargs={'task_id': task_id}))
     ]
     context = {
         'task': task,

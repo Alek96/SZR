@@ -4,7 +4,7 @@ from GitLabApi.objects import VisibilityLevel, AccessLevel
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import F, Value, When, Case
+from django.db.models import F, Q, Value, When, Case
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
@@ -12,7 +12,39 @@ from model_utils import FieldTracker
 from social_django.models import UserSocialAuth
 
 
-class AbstractGitlabModel(models.Model):
+class BaseModel(models.Model):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def on_class_prepared(cls):
+        """Method that is run after setting the app. Here you can add extra fields.
+
+        :return: None
+        """
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        self._pre_save(*args, **kwargs)
+        super().save(*args, **kwargs)
+        self._post_save(*args, **kwargs)
+
+    def _pre_save(self, *args, **kwargs):
+        """
+        Here Children class can set special rules in saving model
+
+        :return: None
+        """
+
+    def _post_save(self, *args, **kwargs):
+        """
+        Here Children class can set special rules in saving model
+
+        :return: None
+        """
+
+
+class AbstractGitlabModel(BaseModel):
     gitlab_id = models.PositiveIntegerField(unique=True, null=True, blank=True)
     gitlab_web_url = models.URLField(null=True, blank=True)
 
@@ -42,7 +74,22 @@ class GitlabUser(AbstractGitlabModel):
         return self.__str__()
 
 
-class AbstractTaskDates(models.Model):
+class AbstractAccessLevel(BaseModel, AccessLevel):
+    access_level = models.IntegerField(choices=AccessLevel.ACCESS_LEVEL_CHOICES, default=AccessLevel.ACCESS_GUEST)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractVisibilityLevel(BaseModel, VisibilityLevel):
+    visibility = models.CharField(max_length=10, choices=VisibilityLevel.VISIBILITY_CHOICES,
+                                  default=VisibilityLevel.PRIVATE)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractTaskDates(BaseModel):
     create_date = models.DateTimeField(default=timezone.now, blank=True)
     execute_date = models.DateTimeField(default=timezone.now, blank=True)
     finished_date = models.DateTimeField(null=True, blank=True)
@@ -51,7 +98,7 @@ class AbstractTaskDates(models.Model):
         abstract = True
 
 
-class AbstractTaskStatus(models.Model):
+class StatusMethods:
     READY = 0
     RUNNING = 1
     SUCCEED = 2
@@ -65,16 +112,20 @@ class AbstractTaskStatus(models.Model):
         (FAILED, _('Failed')),
     )
 
-    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=READY)
+    def is_started(self):
+        status = getattr(self, 'status', None)
+        return not (status == self.READY or status == self.WAITING)
+
+    def is_finished(self):
+        status = getattr(self, 'status', None)
+        return status == self.SUCCEED or status == self.FAILED
+
+
+class AbstractStatus(BaseModel, StatusMethods):
+    status = models.PositiveIntegerField(choices=StatusMethods.STATUS_CHOICES, default=StatusMethods.READY)
 
     class Meta:
         abstract = True
-
-    def is_started(self):
-        return not (self.status == self.READY or self.status == self.WAITING)
-
-    def is_finished(self):
-        return self.status == self.SUCCEED or self.status == self.FAILED
 
 
 class ModelUrlsMethods:
@@ -107,17 +158,19 @@ def create_field_tracker(cls, name):
     tracker.finalize_class(cls)
 
 
-class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
+class AbstractTaskGroup(AbstractTaskDates, StatusMethods, ModelUrlsMethods):
     _parent_task_model = None
 
     name = models.CharField(max_length=2000)
 
-    tasks_number = models.PositiveIntegerField(default=0)
-    finished_tasks_number = models.PositiveIntegerField(default=0)
-    failed_task_number = models.PositiveIntegerField(default=0)
+    def __init__(self, *args, **kwargs):
+        self._status = None
+        self._tasks_number = None
+        self._finished_tasks_number = None
+        self._failed_task_number = None
 
-    parent_task = None
-    tasks_set = None
+        super().__init__(*args, **kwargs)
+
     tracker = None
 
     class Meta:
@@ -127,96 +180,98 @@ class AbstractTaskGroup(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods)
     def on_class_prepared(cls):
         models.ForeignKey(
             cls._parent_task_model,
-            on_delete=models.SET_NULL,
-            related_name='child_task_group_%(class)s',
+            on_delete=models.CASCADE,
+            related_name='child_group_task_set_%(app_label)s_%(class)s',
             null=True, blank=True
         ).contribute_to_class(cls, 'parent_task')
         create_field_tracker(cls, 'tracker')
 
-    @property
-    def new_task_url(self):
-        return '#'
+    def refresh_from_db(self, *args, **kwargs):
+        super().refresh_from_db(*args, **kwargs)
+        self._status = None
+        self._tasks_number = None
+        self._finished_tasks_number = None
+        self._failed_task_number = None
 
-    def clean(self):
-        super().clean()
-
-        if self.pk is not None:
-            if self.tracker.has_changed('status'):
-                if self.status == self.WAITING:
-                    raise ValidationError(
-                        {'status': _('Status cannot be change to "Waiting" after creating')})
-
-    def save(self, *args, **kwargs):
-        self.clean()
-
-        if self.parent_task and not self.parent_task.is_finished():
-            self.status = self.WAITING
-
-        if self.tracker.has_changed('status'):
-            if self.status == self.READY:
-                self._set_tasks_to_ready()
-
+    def _pre_save(self, *args, **kwargs):
         if self.tracker.has_changed('execute_date'):
             self._update_tasks_execute_dates()
 
-        self._save(*args, **kwargs)
-
-        super().save(*args, **kwargs)
-        self._set_status()
-        super().save(update_fields=['status'])
-        self.refresh_from_db()
-
-    def _set_tasks_to_ready(self):
-        for task in self.tasks_set.all():
-            task.status = self.READY
-            task.save()
-
     def _update_tasks_execute_dates(self):
-        for task in self.tasks_set.all():
-            if task.status == self.READY:
+        for task in self.task_set:
+            if not task.is_started():
                 task.execute_date = self.execute_date
                 task.save()
 
-    def _save(self, *args, **kwargs):
-        """
-        Here Children class can set special attributes to saving model
+    @property
+    def task_set(self):
+        task_sets = []
+        for attr in self.__dir__():
+            if attr.startswith('task_set_'):
+                task_set = getattr(self, attr)
+                task_sets.extend(list(task_set.all()))
+        return task_sets
 
-        :return: None
-        """
+    @property
+    def status(self):
+        if self._status is None:
+            self._update_status()
+        return self._status
 
-    def _set_status(self):
-        if self.status != self.WAITING:
-            self.status = Case(
-                When(finished_tasks_number=0, then=Value(self.READY)),
-                When(finished_tasks_number__lt=F('tasks_number'), then=Value(self.RUNNING)),
-                When(failed_task_number__gt=0, then=Value(self.FAILED)),
-                default=Value(self.SUCCEED),
-                output_field=models.PositiveIntegerField()
-            )
+    @property
+    def tasks_number(self):
+        if self._tasks_number is None:
+            self._update_status()
 
-    def increment_task_number(self):
-        self.tasks_number = F('tasks_number') + 1
-        self.finished_date = None
+        return self._tasks_number
 
-    def increment_finished_tasks_number(self, task_status):
-        self.finished_tasks_number += F('finished_tasks_number') + 1
-        if task_status == self.FAILED:
-            self.failed_task_number += F('failed_task_number') + 1
+    @property
+    def finished_tasks_number(self):
+        if self._finished_tasks_number is None:
+            self._update_status()
 
-        self.finished_date = Case(
-            When(tasks_number=F('finished_tasks_number') + 1, then=Value(timezone.now())),
-            default=None,
-            output_field=models.DateTimeField()
-        )
+        return self._finished_tasks_number
+
+    def _update_status(self):
+        self._tasks_number = 0
+        self._finished_tasks_number = 0
+        waiting = False
+        running = False
+        failed = False
+
+        for task in self.task_set:
+            self._tasks_number += 1
+            if task.is_finished():
+                self._finished_tasks_number += 1
+                if task.status == self.FAILED:
+                    failed = True
+            elif task.is_started():
+                running = True
+            elif task.status == self.WAITING:
+                waiting = True
+
+        if waiting:
+            self._status = self.WAITING
+        elif not running and self.finished_tasks_number == 0:
+            self._status = self.READY
+        elif running or self.finished_tasks_number < self._tasks_number:
+            self._status = self.RUNNING
+        else:
+            if failed:
+                self._status = self.FAILED
+            else:
+                self._status = self.SUCCEED
 
 
-class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
+class AbstractTask(AbstractTaskDates, AbstractStatus, ModelUrlsMethods):
+    _parent_task_model = None
     _task_group_model = None
 
-    owner = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, related_name='owned_tasks_%(class)s')
-    celery_task = models.OneToOneField(PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True)
+    owner = models.ForeignKey(GitlabUser, on_delete=models.CASCADE, related_name='owned_tasks_%(app_label)s_%(class)s')
+    celery_task = models.OneToOneField(PeriodicTask, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
     error_msg = models.CharField(max_length=2000, null=True, blank=True)
 
+    parent_task = None
     task_group = None
     tracker = None
 
@@ -225,8 +280,18 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
 
     @classmethod
     def on_class_prepared(cls):
-        task_group = models.ForeignKey(cls._task_group_model, on_delete=models.CASCADE, related_name='tasks_set')
-        task_group.contribute_to_class(cls, 'task_group')
+        models.ForeignKey(
+            cls._parent_task_model,
+            on_delete=models.CASCADE,
+            related_name='child_task_set_%(app_label)s_%(class)s',
+            null=True, blank=True
+        ).contribute_to_class(cls, 'parent_task')
+        models.ForeignKey(
+            cls._task_group_model,
+            on_delete=models.CASCADE,
+            related_name='task_set_%(app_label)s_%(class)s',
+            null=True, blank=True
+        ).contribute_to_class(cls, 'task_group')
         create_field_tracker(cls, 'tracker')
 
     @property
@@ -236,59 +301,67 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
     def clean(self):
         super().clean()
 
-        if self.tracker.has_changed('execute_date'):
-            if self.is_started():
-                raise ValidationError(
-                    {'execute_date': _('Execute_date cannot be change after start of the celery task')})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-
         if self.pk is None:
-            self.task_group.increment_task_number()
-            self.task_group.save()
-            self.execute_date = self.task_group.execute_date
+            if getattr(self, 'task_group', None) and getattr(self, 'parent_task', None):
+                raise ValidationError(
+                    {'parent_task': _('Do not set parent_task. It is set from task_group if task_group exist')})
+
+        if self.pk:
+            if self.tracker.has_changed('execute_date') and self.is_started():
+                raise ValidationError(
+                    {'execute_date': _('Execute_date cannot be change after the celery task is started')})
+
+            if self.tracker.has_changed('status'):
+                if self.status == self.WAITING:
+                    raise ValidationError(
+                        {'status': _('StatusMethods cannot be change to "Waiting" after creating')})
+
+    def _pre_save(self, *args, **kwargs):
+        if self.task_group:
+            if not self.is_started():
+                self.execute_date = self.task_group.execute_date
+                self.parent_task = self.task_group.parent_task
+
+        if self.parent_task:
+            if self.parent_task.is_finished():
+                if self.parent_task.status == self.FAILED:
+                    self.status = self.FAILED
+                    self.error_msg = "Error in parent task: {0}".format(self.parent_task.error_msg)
+            else:
+                self.status = self.WAITING
+
+        if self.tracker.has_changed('status'):
+            if self.is_started():
+                if self.celery_task:
+                    self.celery_task.delete()
+                    self.celery_task = None
+            if self.is_finished():
+                self._update_children_tasks_status()
 
         if self.tracker.has_changed('execute_date'):
             if self.celery_task:
                 self.celery_task.start_time = self.execute_date
                 self.celery_task.save()
 
-        if self.tracker.has_changed('status'):
-            if self.task_group.status == self.WAITING:
-                self.status = self.WAITING
-            if self.is_started():
-                if self.celery_task:
-                    self.celery_task.delete()
-                    self.celery_task = None
-            if self.is_finished():
-                self.task_group.increment_finished_tasks_number(self.status)
-                self.task_group.save()
-                self._update_children_tasks_status()
-
-        self._save(*args, **kwargs)
-
-        super().save(*args, **kwargs)
-
+    def _post_save(self, *args, **kwargs):
         if self.status == self.READY:
             if not self.celery_task:
                 self.celery_task = self._create_task()
                 super().save(update_fields=['celery_task'])
 
     def _update_children_tasks_status(self):
+        for task in self.child_task_set:
+            task.status = self.READY
+            task.save()
+
+    @property
+    def child_task_set(self):
+        task_sets = []
         for attr in self.__dir__():
-            if attr.startswith('child_task_group_'):
-                task_group_set = getattr(self, attr)
-                for task_group in task_group_set.all():
-                    task_group.status = self.READY
-                    task_group.save()
-
-    def _save(self, *args, **kwargs):
-        """
-        Here Children class can set special attributes to saving model
-
-        :return: None
-        """
+            if attr.startswith('child_task_set_'):
+                task_set = getattr(self, attr)
+                task_sets.extend(list(task_set.all()))
+        return task_sets
 
     def _create_task(self):
         return PeriodicTask.objects.create(
@@ -310,18 +383,3 @@ class AbstractTask(AbstractTaskDates, AbstractTaskStatus, ModelUrlsMethods):
 
     def _get_task_path(self):
         raise NotImplementedError('AbstractTask must define the _get_task_path method.')
-
-
-class AbstractAccessLevel(models.Model, AccessLevel):
-    access_level = models.IntegerField(choices=AccessLevel.ACCESS_LEVEL_CHOICES, default=AccessLevel.ACCESS_GUEST)
-
-    class Meta:
-        abstract = True
-
-
-class AbstractVisibilityLevel(models.Model, VisibilityLevel):
-    visibility = models.CharField(max_length=10, choices=VisibilityLevel.VISIBILITY_CHOICES,
-                                  default=VisibilityLevel.PRIVATE)
-
-    class Meta:
-        abstract = True

@@ -1,9 +1,10 @@
-from groups.forms import BaseTaskGroupForm
-from groups.tests.models import FakeTaskGroup, FakeAddSubgroup
+from django import forms
+from groups.forms import BaseTaskForm
+from groups.tests.models import FakeTask
 
 
-class FakeTaskGroupForm(BaseTaskGroupForm):
-    _parent_task_model = FakeAddSubgroup
+class FakeTaskForm(BaseTaskForm):
+    class Meta(BaseTaskForm.Meta):
+        model = FakeTask
 
-    class Meta(BaseTaskGroupForm.Meta):
-        model = FakeTaskGroup
+    name = forms.CharField(label='Name', max_length=50, initial='name')

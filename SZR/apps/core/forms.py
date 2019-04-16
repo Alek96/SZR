@@ -9,7 +9,7 @@ class BaseForm(forms.ModelForm):
     _readonly_fields = []
 
     class Meta:
-        model = models.AbstractTaskStatus
+        model = models.AbstractStatus
         fields = ['status']
 
     def __init__(self, *args, **kwargs):
@@ -18,9 +18,13 @@ class BaseForm(forms.ModelForm):
             self.fields[field].disabled = True
 
         instance = getattr(self, 'instance', None)
-        if instance and instance.id and instance.is_finished():
-            for name, field in self.fields.items():
-                field.disabled = True
+        if instance and instance.id:
+            if instance.is_finished():
+                for name, field in self.fields.items():
+                    field.disabled = True
+        else:
+            for field in self._readonly_fields:
+                self.fields[field].widget = forms.HiddenInput()
 
     def add_error_dict(self, error_dict):
         for field, err_msg in error_dict.items():
@@ -81,6 +85,40 @@ class BaseForm(forms.ModelForm):
         """
 
 
+class BaseTaskGroupForm(BaseForm):
+    _readonly_fields = ['finished_date']
+
+    status = forms.CharField(max_length=20, disabled=True, required=False)
+    tasks_number = forms.IntegerField(disabled=True, required=False)
+    finished_tasks_number = forms.IntegerField(disabled=True, required=False)
+
+    class Meta:
+        model = models.AbstractTaskGroup
+        fields = ['name', 'execute_date', 'finished_date']
+        widgets = {
+            'execute_date': widgets.AdminSplitDateTime,
+        }
+        field_classes = {
+            'execute_date': forms.SplitDateTimeField,
+        }
+
+    fields_order = ['name', 'execute_date',
+                    'finished_date', 'status', 'tasks_number', 'finished_tasks_number']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        instance = getattr(self, 'instance', None)
+        if instance and instance.id:
+            self.fields['status'].initial = instance.status
+            self.fields['tasks_number'].initial = instance.tasks_number
+            self.fields['finished_tasks_number'].initial = instance.finished_tasks_number
+        else:
+            self.fields['status'].widget = forms.HiddenInput()
+            self.fields['tasks_number'].widget = forms.HiddenInput()
+            self.fields['finished_tasks_number'].widget = forms.HiddenInput()
+
+
 class BaseTaskForm(BaseForm):
     _readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
 
@@ -109,21 +147,6 @@ class BaseTaskForm(BaseForm):
         :return: None
         """
 
-    def _save(self, model, user_id, task_group_id, **kwargs):
+    def _save(self, model, user_id, task_group=None, **kwargs):
         model.owner = models.GitlabUser.objects.get(user_id=user_id)
-        model.task_group = model._task_group_model.objects.get(id=task_group_id)
-
-
-class BaseTaskGroupForm(BaseForm):
-    _readonly_fields = ['status', 'finished_date', 'tasks_number', 'finished_tasks_number', 'failed_task_number']
-
-    class Meta:
-        model = models.AbstractTaskGroup
-        fields = ['name', 'execute_date',
-                  'status', 'finished_date', 'tasks_number', 'finished_tasks_number', 'failed_task_number']
-        widgets = {
-            'execute_date': widgets.AdminSplitDateTime,
-        }
-        field_classes = {
-            'execute_date': forms.SplitDateTimeField,
-        }
+        model.task_group = task_group

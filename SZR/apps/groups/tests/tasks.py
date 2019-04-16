@@ -5,7 +5,7 @@ from SZR.celery import app as celery_app
 
 
 class FakeTask(BaseTask):
-    _task_model = models.FakeAddSubgroup
+    _task_model = models.FakeTask
 
 
 celery_app.register_task(FakeTask())

@@ -41,12 +41,12 @@ class AddSubgroupTask(BaseTask):
     _task_model = models.AddSubgroup
 
     def _run(self, **kwargs):
-        if not self._task.task_group.gitlab_group.gitlab_id:
-            raise DoesNotContainGitlabId('Gitlab group {0}'.format(self._task.task_group.gitlab_group_id))
+        if not self._task.gitlab_group.gitlab_id:
+            raise DoesNotContainGitlabId('Gitlab group {0}'.format(self._task.gitlab_group_id))
 
         new_group_id = create_subgroup(
             user_id=self._task.owner.user_id,
-            group_id=self._task.task_group.gitlab_group.gitlab_id,
+            group_id=self._task.gitlab_group.gitlab_id,
             name=self._task.name,
             path=self._task.path,
             description=self._task.description,
@@ -66,12 +66,12 @@ class AddMemberTask(BaseTask):
     _task_model = models.AddMember
 
     def _run(self, **kwargs):
-        if not self._task.task_group.gitlab_group.gitlab_id:
-            raise DoesNotContainGitlabId('Gitlab group {0}'.format(self._task.task_group.gitlab_group_id))
+        if not self._task.gitlab_group.gitlab_id:
+            raise DoesNotContainGitlabId('Gitlab group {0}'.format(self._task.gitlab_group_id))
 
         new_user_id = add_or_update_member(
             user_id=self._task.owner.user_id,
-            group_id=self._task.task_group.gitlab_group.gitlab_id,
+            group_id=self._task.gitlab_group.gitlab_id,
             username=self._task.username,
             access_level=self._task.access_level
         )

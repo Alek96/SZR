@@ -81,7 +81,7 @@ class AddSubgroupTaskTests(LoginMethods):
         self.task_model = AddSubgroupCreateMethods().create_task(
             owner=GitlabUser.objects.get(user_social_auth=self.user_social_auth)
         )
-        self.gitlab_group = self.task_model.task_group.gitlab_group
+        self.gitlab_group = self.task_model.gitlab_group
 
     def get_run_args(self):
         return json.loads(self.task_model.celery_task.kwargs)
@@ -118,7 +118,7 @@ class AddMemberTaskTests(LoginMethods):
         self.task_model = AddMemberCreateMethods().create_task(
             owner=GitlabUser.objects.get(user_social_auth=self.user_social_auth)
         )
-        self.gitlab_group = self.task_model.task_group.gitlab_group
+        self.gitlab_group = self.task_model.gitlab_group
 
     def get_run_args(self):
         return json.loads(self.task_model.celery_task.kwargs)

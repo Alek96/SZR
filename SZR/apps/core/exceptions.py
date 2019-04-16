@@ -11,9 +11,9 @@ class FormError(CoreError):
 
 
 class FormNotValidError(FormError):
-    def __init__(self, error_dict={}):
-        super().__init__(str(error_dict))
-        self.error_dict = error_dict
+    def __init__(self, error_dict=None):
+        self.error_dict = error_dict or {}
+        super().__init__(str(self.error_dict))
         self.error_msg = str(self.error_dict)
 
 

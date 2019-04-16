@@ -4,12 +4,12 @@ from unittest import mock
 from core.tasks import BaseTask
 from core.tests import models
 from core.tests.tasks import FakeTask
-from core.tests.test_models import TaskGroupAndTaskMethods
+from core.tests.test_models import TaskMethods
 from django.utils import timezone
 from freezegun import freeze_time
 
 
-class BaseTaskTests(TaskGroupAndTaskMethods):
+class BaseTaskTests(TaskMethods):
     _task_cls = FakeTask
 
     def setUp(self):
@@ -31,7 +31,6 @@ class BaseTaskTests(TaskGroupAndTaskMethods):
         FakeRaiseTask().run(**self.get_run_args())
 
         self.task_model.refresh_from_db()
-        self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
         self.assertEqual(self.task_model.error_msg, "Task must define the _run method.")
         self.assertEqual(self.task_model.status, self.task_model.FAILED)
         self.assertEqual(self.task_model.finished_date, timezone.now())
@@ -44,7 +43,6 @@ class BaseTaskTests(TaskGroupAndTaskMethods):
         mock_run.assert_called_once_with()
 
         self.task_model.refresh_from_db()
-        self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
         self.assertEqual(self.task_model.error_msg, "Error msg")
         self.assertEqual(self.task_model.status, self.task_model.FAILED)
         self.assertEqual(self.task_model.finished_date, timezone.now())
@@ -54,7 +52,6 @@ class BaseTaskTests(TaskGroupAndTaskMethods):
         self._task_cls().run(**self.get_run_args())
 
         self.task_model.refresh_from_db()
-        self.task_model.task_group.refresh_from_db()  # Bug in Django 2.0
         self.assertEqual(self.task_model.error_msg, None)
         self.assertEqual(self.task_model.status, self.task_model.SUCCEED)
         self.assertEqual(self.task_model.finished_date, timezone.now())
