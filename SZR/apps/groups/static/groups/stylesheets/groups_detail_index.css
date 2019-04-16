@@ -4,3 +4,10 @@
     font-size: 24px;
     padding: 5px;
 }
+.display-inline {
+    display: inline;
+}
+
+.display-none {
+    display: none;
+}

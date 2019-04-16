@@ -7,10 +7,44 @@
 
 {% block head %}
     {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'core/stylesheets/home.css' %}"/>
 {% endblock %}
 
 
 {% block body %}
-    Hello Word
+
+
+<link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<div class="wrapper">
+    <div class="main--content">
+      <div class="main--content__container">
+        <p class="main--content__container__title">
+          SZR
+        </p>
+
+        <ul class="main--content__container__ul">
+          <li class="main--content__container__ul__li">System
+              <i class="fa fa-laptop main--content__container__ul__li__icon"></i>
+          </li>
+          <li class="main--content__container__ul__li">zarządzania
+              <i class="fa fa-tasks main--content__container__ul__li__icon"></i>
+          </li>
+          <li class="main--content__container__ul__li">repozytoriami
+              <i class="fa fa-code-branch main--content__container__ul__li__icon"></i>
+          </li>
+          <li class="main--content__container__ul__li">APSI Projekt </li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="description">
+        System zarządzania repozytoriami to projekt zaliczeniowy na potrzeby przedmiotu APSI.
+        Aleksander Zamojski, Bartosz Grudniewski, Justyna Broniszewska, Kamila Kulas, Szymon Szymborski,
+        Paweł Walczak
+    </div>
+
+</div>
+
 {% endblock %}
 
