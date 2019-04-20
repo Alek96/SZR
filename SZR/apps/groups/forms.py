@@ -1,4 +1,5 @@
 from core import forms
+# from django import forms as django_forms
 from groups import models
 from groups import tasks
 
@@ -45,6 +46,35 @@ class AddSubgroupForm(BaseTaskForm):
             path=data['path'],
             description=data['description'],
             visibility=data['visibility'],
+            **kwargs)
+
+
+class AddProjectForm(BaseTaskForm):
+    # ONE = 'One'
+    # ONE_FOR_ALL_USER = 'one_for_all_users'
+    # PER_USER = 'per_user'
+    # HOW_MANY_CHOICES = (
+    #     (ONE, _('One')),
+    #     (ONE_FOR_ALL_USER, _('One for all users')),
+    #     (PER_USER, _('One per user')),
+    # )
+    #
+    # how_many = django_forms.ChoiceField(choices=HOW_MANY_CHOICES, initial=ONE)
+
+    class Meta(forms.BaseTaskForm.Meta):
+        model = models.AddProject
+        fields = ['name', 'path', 'description', 'visibility'] + forms.BaseTaskForm.Meta.fields
+
+    def _save_in_gitlab(self, data, user_id, group_id=None, **kwargs):
+        super()._save_in_gitlab(data=data, user_id=user_id, group_id=group_id, **kwargs)
+        tasks.create_project(
+            user_id=user_id,
+            group_id=group_id,
+            name=data['name'],
+            path=data['path'],
+            description=data['description'],
+            visibility=data['visibility'],
+            # import_url=data['import_url'],
             **kwargs)
 
 

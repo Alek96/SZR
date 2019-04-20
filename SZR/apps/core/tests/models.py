@@ -1,4 +1,5 @@
 from core import models
+from core.models import GitlabUser
 
 
 class FakeBaseModel(models.BaseModel):
@@ -36,3 +37,23 @@ class FakeTask(models.AbstractTask):
 
     def _get_task_path(self):
         return 'core.tests.tasks.FakeTask'
+
+
+class TaskGroupCreateMethods:
+    def create_task_group(self, name='Name', **kwargs):
+        return FakeTaskGroup.objects.create(
+            name=name,
+            **kwargs
+        )
+
+
+class TaskCreateMethods(TaskGroupCreateMethods):
+    def create_task(self, owner=None, task_group=None, **kwargs):
+        return FakeTask.objects.create(
+            owner=owner or GitlabUser.objects.create(),
+            task_group=task_group,
+            **kwargs
+        )
+
+    def create_parent_task(self, **kwargs):
+        return self.create_task(**kwargs)

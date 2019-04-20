@@ -6,7 +6,7 @@ from django.urls import reverse
 from groups import models
 from groups.sidebar import GroupSidebar, FutureGroupSidebar
 from groups.tests import test_forms
-from groups.tests import test_models
+from groups.tests import models as test_models
 
 
 class GitlabWrapperAppNameCase:
@@ -103,6 +103,7 @@ class TasksPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         new_group_links = [
             ('New Task Group', reverse('groups:new_task_group', kwargs=self.args)),
             ('New Subgroup', reverse('groups:new_subgroup_task', kwargs=self.args)),
+            ('New Project', reverse('groups:new_project_task', kwargs=self.args)),
             ('New Member', reverse('groups:new_member_task', kwargs=self.args))
         ]
         for group_link in response.context['new_group_links']:
@@ -389,6 +390,143 @@ class EditSubgroupTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest
                          reverse('groups:future_group_tasks', kwargs={'task_id': self.parent_task.id}))
 
 
+class NewProjectPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_project'
+    args = {'group_id': '1'}
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), test_forms.AddProjectFormTests.valid_form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('groups:detail', kwargs=self.args))
+
+
+class NewProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_project_task'
+    args = {'task_group_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.parent_task = test_models.AddProjectCreateMethods().create_parent_task()
+        self.task_group = test_models.AddProjectCreateMethods().create_task_group(
+            parent_task=self.parent_task
+        )
+        self.args['task_group_id'] = self.task_group.id
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_group_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    def _test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), test_forms.AddProjectFormTests.valid_form_data)
+        self.assertEqual(response.status_code, 302)
+
+        model = models.AddProject.objects.get(task_group=self.task_group)
+        for key, value in test_forms.AddProjectFormTests.valid_form_data.items():
+            self.assertEqual(getattr(model, key), value)
+
+        return response
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data_redirect_to_tasks(self):
+        self.task_group.gitlab_group.gitlab_id = 42
+        self.task_group.gitlab_group.save()
+
+        response = self._test_page_post_valid_data()
+
+        self.assertEqual(response.url,
+                         reverse('groups:tasks', kwargs={'group_id': self.task_group.gitlab_group.gitlab_id}))
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data_redirect_to_tasks(self):
+        response = self._test_page_post_valid_data()
+
+        self.assertEqual(response.url,
+                         reverse('groups:future_group_tasks', kwargs={'task_id': self.parent_task.id}))
+
+
+class EditProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'edit_project_task'
+    args = {'task_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.parent_task = test_models.AddProjectCreateMethods().create_parent_task()
+        self.task = test_models.AddProjectCreateMethods().create_task(
+            parent_task=self.parent_task)
+        self.args['task_id'] = self.task.id
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    def _test_page_post_valid_data(self):
+        data = self.get_initial_form_data()
+        self.assertEqual(data['name'], self.task.name)
+        data['name'] = 'Another Name'
+        data['description'] = 'Description'
+
+        response = self.client.post(self.get_url(), data)
+        self.assertEqual(response.status_code, 302)
+
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.name, data['name'])
+        self.assertEqual(self.task.description, data['description'])
+
+        return response
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data_redirect_to_tasks(self):
+        self.task.gitlab_group.gitlab_id = 42
+        self.task.gitlab_group.save()
+
+        response = self._test_page_post_valid_data()
+
+        self.assertEqual(response.url,
+                         reverse('groups:tasks', kwargs={'group_id': self.task.gitlab_group.gitlab_id}))
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data_redirect_to_future_tasks(self):
+        response = self._test_page_post_valid_data()
+
+        self.assertEqual(response.url,
+                         reverse('groups:future_group_tasks', kwargs={'task_id': self.parent_task.id}))
+
+
 class NewMemberPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'new_member'
     args = {'group_id': '1'}
@@ -617,6 +755,7 @@ class FutureGroupTasksPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest
         new_group_links = [
             ('New Task Group', reverse('groups:new_task_group', kwargs=self.args)),
             ('New Subgroup', reverse('groups:new_subgroup_task', kwargs=self.args)),
+            ('New Project', reverse('groups:new_project_task', kwargs=self.args)),
             ('New Member', reverse('groups:new_member_task', kwargs=self.args))
         ]
         for group_link in response.context['new_group_links']:

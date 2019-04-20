@@ -5,7 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from groups import models
-from groups.tests import models as test_models
+from groups.tests.models import AbstractTaskCreateMethods, AddSubgroupCreateMethods, AddProjectCreateMethods, \
+    AddMemberCreateMethods
 
 
 class GitlabGroupModelUnitTests(TestCase):
@@ -127,28 +128,14 @@ class GitlabGroupModelUnitTests(TestCase):
         self.assertEqual(finished_task_list[3].id, member_list[4].id)
 
 
-class TaskGroupMethods(core_test_models.TaskGroupMethods):
-    def create_task_group(self, name='Name', gitlab_group=None, parent_task=None, **kwargs):
-        return models.TaskGroup.objects.create(
-            name=name,
-            gitlab_group=gitlab_group or (None if parent_task else models.GitlabGroup.objects.create()),
-            parent_task=parent_task,
-            **kwargs
-        )
+class GitlabProjectModelUnitTests(TestCase):
+    def test_representation(self):
+        project = models.GitlabProject.objects.create()
+        self.assertEqual(repr(project), "<Project: {}>".format(project.id))
 
-
-class AbstractTaskCreateMethods(TaskGroupMethods, core_test_models.TaskMethods):
-    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, **kwargs):
-        return test_models.FakeTask.objects.create(
-            owner=owner or core_models.GitlabUser.objects.create(),
-            task_group=task_group,
-            gitlab_group=gitlab_group or (None if (task_group or parent_task) else models.GitlabGroup.objects.create()),
-            parent_task=parent_task,
-            **kwargs
-        )
-
-    def create_parent_task(self, **kwargs):
-        return AddSubgroupCreateMethods().create_task(**kwargs)
+    def test_string_representation(self):
+        project = models.GitlabProject.objects.create()
+        self.assertEqual(str(project), "<Project: {}>".format(project.id))
 
 
 class TaskGroupTests(AbstractTaskCreateMethods, core_test_models.AbstractTaskGroupTests):
@@ -231,29 +218,12 @@ class AbstractTaskTests(AbstractTaskCreateMethods, core_test_models.AbstractTask
         self.assertEqual(task.parent_task.id, parent_task.id)
 
 
-class AddSubgroupCreateMethods(TaskGroupMethods, core_test_models.TaskMethods):
-    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, name='name', path='path',
-                    **kwargs):
-        return models.AddSubgroup.objects.create(
-            owner=owner or core_models.GitlabUser.objects.create(),
-            task_group=task_group,
-            gitlab_group=gitlab_group or (None if (task_group or parent_task) else models.GitlabGroup.objects.create()),
-            parent_task=parent_task,
-            name=name,
-            path=path,
-            **kwargs
-        )
-
-    def create_parent_task(self, **kwargs):
-        return AddSubgroupCreateMethods().create_task(**kwargs)
-
-
 class AddSubgroupTests(AddSubgroupCreateMethods, core_test_models.AbstractTaskTests):
-    def test_init_create_new_gitlab_group_if_does_not_exist(self):
+    def test_creating_obj_create_new_gitlab_group(self):
         task = self.create_task()
         self.assertTrue(task.new_gitlab_group)
 
-    def test_init_does_not_create_new_gitlab_group_if_it_exists(self):
+    def test_creating_with_new_gitlab_group_does_not_create_new_gitlab_group(self):
         gitlab_group = models.GitlabGroup.objects.create()
         task = self.create_task(new_gitlab_group=gitlab_group)
         self.assertEqual(task.new_gitlab_group.id, gitlab_group.id)
@@ -273,17 +243,29 @@ class AddSubgroupTests(AddSubgroupCreateMethods, core_test_models.AbstractTaskTe
         self.assertEqual(task.delete_url, '#')
 
 
-class AddMemberCreateMethods(AbstractTaskCreateMethods):
-    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, username='username',
-                    **kwargs):
-        return models.AddMember.objects.create(
-            owner=owner or core_models.GitlabUser.objects.create(),
-            task_group=task_group,
-            gitlab_group=gitlab_group or (None if (task_group or parent_task) else models.GitlabGroup.objects.create()),
-            parent_task=parent_task,
-            username=username,
-            **kwargs
-        )
+class AddProjectTests(AddProjectCreateMethods, core_test_models.AbstractTaskTests):
+    def test_creating_obj_create_new_gitlab_project(self):
+        task = self.create_task()
+        self.assertTrue(task.new_gitlab_project)
+
+    def test_creating_with_new_gitlab_project_does_not_create_new_gitlab_project(self):
+        gitlab_project = models.GitlabProject.objects.create()
+        task = self.create_task(new_gitlab_project=gitlab_project)
+        self.assertEqual(task.new_gitlab_project, gitlab_project)
+
+    def test_task_name(self):
+        task = self.create_task()
+        self.assertEqual(task.task_name, 'Create project: {}'.format(task.name))
+
+    def test_edit_url(self):
+        task = self.create_task()
+        self.assertEqual(
+            task.edit_url,
+            reverse('groups:edit_project_task', kwargs={'task_id': task.id}))
+
+    def test_delete_url(self):
+        task = self.create_task()
+        self.assertEqual(task.delete_url, '#')
 
 
 class AddMemberTests(AddMemberCreateMethods, core_test_models.AbstractTaskTests):

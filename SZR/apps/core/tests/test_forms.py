@@ -5,7 +5,6 @@ from GitLabApi.exceptions import NON_FIELD_ERRORS as GitLabApi_NON_FIELD_ERRORS
 from core.exceptions import FormError, FormNotValidError
 from core.tests import forms as test_forms
 from core.tests import models as test_models
-from core.tests.test_models import TaskMethods
 from core.tests.test_view import LoginMethods
 from django.core.exceptions import NON_FIELD_ERRORS as django_NON_FIELD_ERRORS
 from django.forms import HiddenInput
@@ -14,6 +13,7 @@ from django.forms import HiddenInput
 class BaseFormTest(LoginMethods):
     form_class = test_forms.FakeBaseForm
     model_class = test_models.FakeStatus
+    model_methods = None
     valid_form_data = {
         'name': "My Name",
     }
@@ -138,6 +138,7 @@ class BaseFormTest(LoginMethods):
 class BaseTaskGroupFormTest(BaseFormTest):
     form_class = test_forms.FakeTaskGroupForm
     model_class = test_models.FakeTaskGroup
+    model_methods = test_models.TaskCreateMethods()
     valid_form_data = {
         'name': "My Name",
     }
@@ -145,11 +146,10 @@ class BaseTaskGroupFormTest(BaseFormTest):
     readonly_fields = ['finished_date']
 
     def create_model(self, status=None, **kwargs):
-        create_methods = TaskMethods()
-        task_group = create_methods.create_task_group(**kwargs)
+        task_group = self.model_methods.create_task_group(**kwargs)
 
         if status == self.model_class.SUCCEED:
-            create_methods.create_task(task_group=task_group, status=status)
+            self.model_methods.create_task(task_group=task_group, status=status)
 
         return task_group
 
@@ -184,6 +184,7 @@ class BaseTaskGroupFormTest(BaseFormTest):
 class BaseTaskFormTest(BaseFormTest):
     form_class = test_forms.FakeTaskForm
     model_class = test_models.FakeTask
+    model_methods = test_models.TaskCreateMethods()
     valid_form_data = {
         'name': "My Name",
     }
@@ -191,13 +192,24 @@ class BaseTaskFormTest(BaseFormTest):
     readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
 
     def create_model(self, **kwargs):
-        return TaskMethods().create_task(**kwargs)
+        return self.model_methods.create_task(**kwargs)
 
     @LoginMethods.create_user_wrapper
     def test_save(self):
         form = self.form_class(self.valid_form_data)
-        model = form.save(user_id=self.user.id)
-        self.assertIsInstance(model, self.model_class)
+        task = form.save(user_id=self.user.id)
+        self.assertIsInstance(task, self.model_class)
+
+    @LoginMethods.create_user_wrapper
+    def test_save_with_task_group(self):
+        task_group = self.model_methods.create_task_group()
+        form = self.form_class(self.valid_form_data)
+        task = form.save(user_id=self.user.id, task_group=task_group)
+
+        self.assertIsInstance(task, self.model_class)
+        self.assertTrue(task.id)
+        self.assertEqual(task.task_group.id, task_group.id)
+        self.assertEqual(task.owner_id, self.user.id)
 
     @LoginMethods.create_user_wrapper
     def test_save_in_gitlab(self):

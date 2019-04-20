@@ -145,27 +145,7 @@ class ModelLinksMethodsTests(TestCase):
         self.assertEqual(self.model.tasks_page_url, '#')
 
 
-class TaskGroupMethods(TestCase):
-    def create_task_group(self, name='Name', **kwargs):
-        return test_models.FakeTaskGroup.objects.create(
-            name=name,
-            **kwargs
-        )
-
-
-class TaskMethods(TaskGroupMethods):
-    def create_task(self, owner=None, task_group=None, **kwargs):
-        return test_models.FakeTask.objects.create(
-            owner=owner or GitlabUser.objects.create(),
-            task_group=task_group,
-            **kwargs
-        )
-
-    def create_parent_task(self, **kwargs):
-        return self.create_task(**kwargs)
-
-
-class AbstractTaskGroupTests(TaskMethods):
+class AbstractTaskGroupTests(TestCase, test_models.TaskCreateMethods):
     def test_default_values(self):
         self.create_task_group()
 
@@ -266,7 +246,7 @@ class AbstractTaskNotImplementedTests(TestCase):
             test_models.FakeRaiseTask.objects.create(owner=GitlabUser.objects.create())
 
 
-class AbstractTaskTests(TaskMethods):
+class AbstractTaskTests(TestCase, test_models.TaskCreateMethods):
     def test_task_name(self):
         task = self.create_task()
         self.assertEqual(task.task_name, str(task))

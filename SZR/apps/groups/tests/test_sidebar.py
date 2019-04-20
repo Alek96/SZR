@@ -3,7 +3,7 @@ import unittest
 from GitLabApi import GitLabApi, mock_all_gitlab_url
 from core.tests.test_view import LoginMethods
 from groups.sidebar import GroupSidebar, FutureGroupSidebar
-from groups.tests.test_models import AddSubgroupCreateMethods
+from groups.tests.models import AddSubgroupCreateMethods
 
 
 class GroupSidebarTests(LoginMethods):

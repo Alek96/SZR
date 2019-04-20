@@ -4,12 +4,13 @@ from unittest import mock
 from core.tasks import BaseTask
 from core.tests import models
 from core.tests.tasks import FakeTask
-from core.tests.test_models import TaskMethods
+from core.tests.models import TaskCreateMethods
 from django.utils import timezone
+from django.test import TestCase
 from freezegun import freeze_time
 
 
-class BaseTaskTests(TaskMethods):
+class BaseTaskTests(TestCase, TaskCreateMethods):
     _task_cls = FakeTask
 
     def setUp(self):

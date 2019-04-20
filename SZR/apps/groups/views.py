@@ -61,6 +61,7 @@ def tasks(request, group_id):
     new_group_links = [
         ('New Task Group', reverse('groups:new_task_group', kwargs={'group_id': group_id})),
         ('New Subgroup', reverse('groups:new_subgroup_task', kwargs={'group_id': group_id})),
+        ('New Project', reverse('groups:new_project_task', kwargs={'group_id': group_id})),
         ('New Member', reverse('groups:new_member_task', kwargs={'group_id': group_id}))
     ]
     context = {
@@ -175,6 +176,57 @@ def edit_subgroup_task(request, task_id):
 
 
 @login_required
+def new_project(request, group_id):
+    form = forms.AddProjectForm(request.POST or None)
+    context = {
+        "form": form,
+        "page_title": 'New Project',
+        "fields_title": 'New Project',
+    }
+    try:
+        form.save_in_gitlab(user_id=request.user.id, group_id=group_id)
+    except FormNotValidError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(reverse('groups:detail', args=(group_id,)))
+
+
+@login_required
+def new_project_task(request, group_id=None, task_group_id=None, task_id=None):
+    task_group = get_object_or_404(models.TaskGroup, id=task_group_id) if task_group_id else None
+    parent_task = get_object_or_404(models.AddProject, id=task_id) if task_id else None
+    form = forms.AddProjectForm(request.POST or None)
+    context = {
+        "form": form,
+        "page_title": 'Add Project Task',
+        "fields_title": 'Add Project Task',
+    }
+    try:
+        model = form.save(user_id=request.user.id, group_id=group_id, task_group=task_group, parent_task=parent_task)
+    except FormNotValidError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.tasks_page_url)
+
+
+@login_required
+def edit_project_task(request, task_id):
+    task = get_object_or_404(models.AddProject, id=task_id)
+    form = forms.AddProjectForm(request.POST or None, instance=task)
+    context = {
+        "form": form,
+        "page_title": 'Edit Project Task',
+        "fields_title": 'Edit Project Task',
+    }
+    try:
+        model = form.update()
+    except FormNotValidError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.tasks_page_url)
+
+
+@login_required
 def new_member(request, group_id):
     form = forms.AddMemberForm(request.POST or None)
     context = {
@@ -256,6 +308,7 @@ def future_group_tasks(request, task_id):
     new_group_links = [
         ('New Task Group', reverse('groups:new_task_group', kwargs={'task_id': task_id})),
         ('New Subgroup', reverse('groups:new_subgroup_task', kwargs={'task_id': task_id})),
+        ('New Project', reverse('groups:new_project_task', kwargs={'task_id': task_id})),
         ('New Member', reverse('groups:new_member_task', kwargs={'task_id': task_id}))
     ]
     context = {

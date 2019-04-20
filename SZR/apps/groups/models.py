@@ -60,6 +60,14 @@ class GitlabGroup(core_models.AbstractGitlabModel):
             ))
 
 
+class GitlabProject(core_models.AbstractGitlabModel):
+    def __str__(self):
+        return "<Project: {}>".format(self.id)
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class TaskGroup(core_models.AbstractTaskGroup):
     _parent_task_model = 'AddSubgroup'
 
@@ -166,6 +174,59 @@ class AddSubgroup(AbstractTask, core_models.AbstractVisibilityLevel):
 
     def _get_task_path(self):
         return 'groups.tasks.AddSubgroupTask'
+
+
+class AddProject(AbstractTask, core_models.AbstractVisibilityLevel):
+    BLANK = 'blank'
+    FORK = 'fork'
+    COPY = 'copy'
+    CREATE_TYPE_CHOICES = (
+        (BLANK, _('Blank')),
+        (FORK, _('Fork')),
+        (COPY, _('Copy')),
+    )
+
+    create_type = models.CharField(max_length=10, choices=CREATE_TYPE_CHOICES, default=BLANK)
+    name = models.CharField(max_length=100)
+    path = models.SlugField(max_length=100)
+    description = models.TextField(max_length=2000, null=True, blank=True)
+    import_url = models.URLField(max_length=200, null=True, blank=True)
+    new_gitlab_project = models.OneToOneField(GitlabProject, on_delete=models.CASCADE, blank=True)
+
+    def clean(self):
+        super().clean()
+
+        # if self.create_type != self.BLANK:
+        #     if not self.import_url:
+        #         raise ValidationError(
+        #             {'import_url': _('Import_url must be specified')})
+        # else:
+        #     self.import_url = ''
+
+    def _pre_save(self, *args, **kwargs):
+        super()._pre_save(*args, **kwargs)
+
+        if self.pk is None:
+            if getattr(self, 'new_gitlab_project', None) is None:
+                self.new_gitlab_project = GitlabProject.objects.create()
+
+    @property
+    def task_name(self):
+        return _('Create project: {}'.format(self.name))
+
+    @property
+    def edit_url(self):
+        kwargs = {
+            'task_id': self.id,
+        }
+        return reverse('groups:edit_project_task', kwargs=kwargs)
+
+    @property
+    def delete_url(self):
+        return '#'
+
+    def _get_task_path(self):
+        return 'groups.tasks.AddProjectTask'
 
 
 class AddMember(AbstractTask, core_models.AbstractAccessLevel):
