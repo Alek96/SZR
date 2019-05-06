@@ -16,7 +16,7 @@
 }
 
 .list-group.list-group-root .group-list-tree li {
-    font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
+    font: 200 18px/1.5 Helvetica, Verdana, sans-serif;
 }
 
 .list-group.list-group-root .group-list-tree li:last-child {
@@ -39,7 +39,7 @@
 }
 
 .list-group.list-group-root .list-group-item-2:hover {
-    font-size: 24px;
+    font-size: 20px;
     background: rgba(0, 0, 100, 0.1);
 }
 

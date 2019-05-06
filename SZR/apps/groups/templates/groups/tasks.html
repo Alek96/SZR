@@ -18,6 +18,7 @@
 {% endblock %}
 
 {% block page-content-body %}
+
     <div class="container">
         <div class="row">
             <div class="col">
@@ -30,11 +31,11 @@
                     </div>
                     <div class="display-none" id="resolvedOptions">
                         <ul>
-                        {% for option in new_group_links %}
-                            <li>
-                                <a href={{option.1}}  class="badge badge-light">{{option.0}}</a>
-                            </li>
-                        {% endfor %}
+                            {% for name, link in new_group_links %}
+                                <li>
+                                    <a href="{{ link }}" class="badge badge-light">{{ name }}</a>
+                                </li>
+                            {% endfor %}
                         </ul>
 
                     </div>
@@ -44,37 +45,7 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="list-group list-group-root well">
-                    <ul class="group-list-tree">
-                        <div class="row">
-                           <div class="col-sm-3 font-weight-bold ">Name</div>
-                           <div class="col-sm-3 font-weight-bold">Status</div>
-                           <div class="col-sm-3 font-weight-bold">Execution date</div>
-                        </div>
-                        {% for task in unfinished_task_list %}
-                            <li>
-                                <div class="list-group-item-2 list-group-item-member">
-                                    <a href="#">
-                                        <div class="row">
-                                           <div class="col-sm-3 font-weight-bold">{{ task.name }}</div>
-                                           <div class="col-sm-3 font-weight-bold">{{ task.get_status_display }}</div>
-                                           <div class="col-sm-3 font-weight-bold">{{ task.execute_date }}</div>
-                                           <div class="col-sm-3 font-weight-bold">
-                                               <button type="button" class="btn btn-light btn-sm float-right edit-button">Edit</button>
-                                           </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include 'groups/unfinished_task_list.html' %}
 
     <div class="container">
         <div class="row">
@@ -84,35 +55,7 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="list-group list-group-root well">
-                    <ul class="group-list-tree">
-                        <div class="row">
-                           <div class="col-sm-3 font-weight-bold">Name</div>
-                           <div class="col-sm-3 font-weight-bold">Status</div>
-                           <div class="col-sm-3 font-weight-bold">Finished date</div>
-                        </div>
-                        {% for task in finished_task_list %}
-                            <li>
-                                <div class="list-group-item-2 list-group-item-member">
-                                    <a href="#">
-                                        <div class="col-sm-3 font-weight-bold">{{ task.name }}</div>
-                                        <div class="col-sm-3 font-weight-bold">{{ task.get_status_display }}</div>
-                                        <div class="col-sm-3 font-weight-bold">{{ task.finished_date }}</div>
-                                        <div class="col-sm-3 font-weight-bold">
-                                           <button type="button" class="btn btn-light btn-sm float-right edit-button">Edit</button>
-                                        </div>
-                                    </a>
-                                </div>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include 'groups/finished_task_list.html' %}
 
 {% endblock %}
 

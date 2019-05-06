@@ -19,7 +19,7 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Members</h1>
+                <h1>Future Members</h1>
             </div>
             <div class="col">
                 <div class="row buttons-new float-right">
@@ -31,28 +31,7 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="list-group list-group-root well">
-                    <ul class="group-list-tree">
-{#                        {% for member in group.members.list %}#}
-{#                            <li>#}
-{#                                <div class="list-group-item-2 list-group-item-member">#}
-{#                                    <a href="#">#}
-{#                                        <span>{{ member.name }}</span>#}
-{#                                    </a>#}
-{#                                    <a href="#">#}
-{#                                        <span>{{ member.access_level }}</span>#}
-{#                                    </a>#}
-{#                                </div>#}
-{#                            </li>#}
-{#                        {% endfor %}#}
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include 'groups/unfinished_task_list.html' %}
 
 {% endblock %}
 

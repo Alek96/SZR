@@ -1,6 +1,6 @@
 import json
 
-from GitLabApi.objects import VisibilityLevel, AccessLevel
+from GitLabApi.objects import ChoiceAttribute, VisibilityLevel, AccessLevel
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -98,7 +98,7 @@ class AbstractTaskDates(BaseModel):
         abstract = True
 
 
-class StatusMethods:
+class StatusMethods(ChoiceAttribute):
     READY = 0
     RUNNING = 1
     SUCCEED = 2
@@ -111,6 +111,9 @@ class StatusMethods:
         (SUCCEED, _('Succeed')),
         (FAILED, _('Failed')),
     )
+
+    def get_status_readable(self):
+        return self._get_field_readable(getattr(self, 'status', None), self.STATUS_CHOICES)
 
     def is_started(self):
         status = getattr(self, 'status', None)
@@ -129,6 +132,10 @@ class AbstractStatus(BaseModel, StatusMethods):
 
 
 class ModelUrlsMethods:
+
+    @property
+    def get_name(self):
+        return str(self)
 
     @property
     def edit_url(self):
@@ -262,6 +269,10 @@ class AbstractTaskGroup(AbstractTaskDates, StatusMethods, ModelUrlsMethods):
             else:
                 self._status = self.SUCCEED
 
+    @property
+    def get_name(self):
+        return _('Task Group: {}'.format(self.name))
+
 
 class AbstractTask(AbstractTaskDates, AbstractStatus, ModelUrlsMethods):
     _parent_task_model = None
@@ -293,10 +304,6 @@ class AbstractTask(AbstractTaskDates, AbstractStatus, ModelUrlsMethods):
             null=True, blank=True
         ).contribute_to_class(cls, 'task_group')
         create_field_tracker(cls, 'tracker')
-
-    @property
-    def task_name(self):
-        return str(self)
 
     def clean(self):
         super().clean()

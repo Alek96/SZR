@@ -1,0 +1,49 @@
+{% load staticfiles %}
+{% load core_extras %}
+
+
+<link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/group_list.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/tasks.css' %}"/>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group list-group-root well">
+                <ul class="group-list-tree">
+                    <div class="row">
+                        <div class="col-sm-6 font-weight-bold">Name</div>
+                        <div class="col-sm-3 font-weight-bold">Finished date</div>
+                        <div class="col-sm-2 font-weight-bold">Status</div>
+                    </div>
+                    {% for task in finished_task_list %}
+                        <li>
+                            <div class="list-group-item-2 list-group-item-member">
+                                <div class="row">
+                                    <div class="col-sm-6 font-weight-bold">
+                                        {% if task|name == 'TaskGroup' %}
+                                            <a href="{% url 'groups:future_group_detail' task.id %}">{{ task.get_name }} </a>
+                                        {% else %}
+                                            {{ task.get_name }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-sm-3 font-weight-bold">{{ task.finished_date }}</div>
+                                    <div class="col-sm-2 font-weight-bold">{{ task.get_status_readable }}</div>
+                                    <div class="col-sm-1 font-weight-bold">
+                                        <button type="button" onclick="location.href='{{ task.edit_url }}'"
+                                                class="btn btn-light btn-sm float-right edit-button">Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+

@@ -37,7 +37,8 @@ def detail(request, group_id):
     context = {
         'group': group,
         'sidebar': GroupSidebar(group),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_subgroup_group(),
+        'unfinished_add_subgroup_list': gitlab_group.get_unfinished_add_subgroup_list(),
+        'unfinished_add_project_list': gitlab_group.get_unfinished_add_project_list(),
     }
     return render(request, 'groups/detail.html', context)
 
@@ -49,7 +50,7 @@ def members(request, group_id):
     context = {
         'group': group,
         'sidebar': GroupSidebar(group),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_member_group(),
+        'unfinished_task_list': gitlab_group.get_unfinished_add_member_list(),
     }
     return render(request, 'groups/members.html', context)
 
@@ -67,8 +68,8 @@ def tasks(request, group_id):
     context = {
         'group': group,
         'sidebar': GroupSidebar(group),
-        'unfinished_task_list': gitlab_group.get_unfinished_task_list(),
-        'finished_task_list': gitlab_group.get_finished_task_list(),
+        'unfinished_task_list': gitlab_group.get_unfinished_task_list(include_groups=True),
+        'finished_task_list': gitlab_group.get_finished_task_list(include_groups=True),
         'new_group_links': new_group_links,
     }
     return render(request, 'groups/tasks.html', context)
@@ -95,8 +96,8 @@ def new_subgroup(request, group_id):
     form = forms.AddSubgroupForm(request.POST or None)
     context = {
         "form": form,
-        "page_title": 'New Group',
-        "fields_title": 'New Group',
+        "page_title": 'New Subgroup',
+        "fields_title": 'New Subgroup',
     }
     try:
         form.save_in_gitlab(user_id=request.user.id, group_id=group_id)
@@ -194,7 +195,7 @@ def new_project(request, group_id):
 @login_required
 def new_project_task(request, group_id=None, task_group_id=None, task_id=None):
     task_group = get_object_or_404(models.TaskGroup, id=task_group_id) if task_group_id else None
-    parent_task = get_object_or_404(models.AddProject, id=task_id) if task_id else None
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
     form = forms.AddProjectForm(request.POST or None)
     context = {
         "form": form,
@@ -284,7 +285,7 @@ def future_group_detail(request, task_id):
     context = {
         'task': task,
         'sidebar': FutureGroupSidebar(task),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_subgroup_group(),
+        'unfinished_task_list': gitlab_group.get_unfinished_add_subgroup_list(),
     }
     return render(request, 'groups/tasks/detail.html', context)
 
@@ -296,7 +297,7 @@ def future_group_members(request, task_id):
     context = {
         'task': task,
         'sidebar': FutureGroupSidebar(task),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_member_group(),
+        'unfinished_task_list': gitlab_group.get_unfinished_add_member_list(),
     }
     return render(request, 'groups/tasks/members.html', context)
 
@@ -314,8 +315,8 @@ def future_group_tasks(request, task_id):
     context = {
         'task': task,
         'sidebar': FutureGroupSidebar(task),
-        'unfinished_task_list': gitlab_group.get_unfinished_task_list(),
-        'finished_task_list': gitlab_group.get_finished_task_list(),
+        'unfinished_task_list': gitlab_group.get_unfinished_task_list(include_groups=True),
+        'finished_task_list': gitlab_group.get_finished_task_list(include_groups=True),
         'new_group_links': new_group_links,
     }
     return render(request, 'groups/tasks/tasks.html', context)

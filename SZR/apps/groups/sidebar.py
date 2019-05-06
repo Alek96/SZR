@@ -78,7 +78,7 @@ class GroupSidebar(sidebar.Sidebar):
 class FutureGroupSidebar(sidebar.Sidebar):
     def __init__(self, task, **kwargs):
         super().__init__(
-            title=task.task_name,
+            title=task.get_name,
             name='Group Menu',
             search=True,
             **kwargs)

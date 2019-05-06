@@ -24,15 +24,35 @@
             <div class="col">
                 <div class="row buttons-new float-right">
                     <div class="button-new-project">
-                        <a href="#" class="badge badge-success">New Project</a>
+                        <a href="{% url 'groups:new_project' group.id %}" class="badge badge-success">New Project</a>
                     </div>
                     <div class="button-new-group">
-                        <a href="{% url 'groups:new_group' %}" class="badge badge-success">New Group</a>
+                        <a href="{% url 'groups:new_subgroup' group.id %}" class="badge badge-success">New Subgroup</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     {% include 'groups/group_list.html' with group_list=group.subgroups.list project_list=group.projects.list %}
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h2>Tasks - Future Subgroups</h2>
+            </div>
+        </div>
+    </div>
+    {% include 'groups/unfinished_task_list.html' with unfinished_task_list=unfinished_add_subgroup_list %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h2>Tasks - Future Projects</h2>
+            </div>
+        </div>
+    </div>
+    {% include 'groups/unfinished_task_list.html' with unfinished_task_list=unfinished_add_project_list %}
+
 {% endblock %}
 

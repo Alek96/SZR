@@ -23,6 +23,6 @@ class FutureGroupSidebarTests(unittest.TestCase):
     def test_init(self):
         task = AddSubgroupCreateMethods().create_task()
         sidebar = FutureGroupSidebar(task)
-        self.assertEqual(sidebar.title, task.task_name)
+        self.assertEqual(sidebar.title, task.get_name)
         self.assertEqual(sidebar.name, 'Group Menu')
         self.assertEqual(sidebar.search, True)

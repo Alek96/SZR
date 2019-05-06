@@ -22,3 +22,13 @@ def call_method(obj, method_name, *args):
     """
     method = getattr(obj, method_name)
     return method(*args)
+
+
+@register.filter
+def name(obj):
+    """return the object name
+
+    Using in template:
+    '{{ obj|name }}'
+    """
+    return obj.__class__.__name__

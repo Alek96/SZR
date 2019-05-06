@@ -34,16 +34,16 @@ class AccessLevelTests(unittest.TestCase):
     def test_get_access_level_readable(self):
         access_level = objects.AccessLevel()
         access_level.access_level = objects.AccessLevel.ACCESS_GUEST
-        self.assertNotEqual(access_level.access_level, 'Guest')
-        self.assertEqual(access_level.get_access_level_readable(), 'Guest')
+        self.assertEqual(access_level.get_access_level_readable(),
+                         dict(access_level.ACCESS_LEVEL_CHOICES).get(access_level.ACCESS_GUEST))
 
 
 class VisibilityLevelTests(unittest.TestCase):
     def test_get_visibility_readable(self):
         visibility = objects.VisibilityLevel()
         visibility.visibility = objects.VisibilityLevel.PUBLIC
-        self.assertNotEqual(visibility.visibility, 'Public')
-        self.assertEqual(visibility.get_visibility_readable(), 'Public')
+        self.assertEqual(visibility.get_visibility_readable(),
+                         dict(visibility.VISIBILITY_CHOICES).get(visibility.PUBLIC))
 
 
 class GroupSubgroupTests(unittest.TestCase):
@@ -53,7 +53,8 @@ class GroupSubgroupTests(unittest.TestCase):
     def test_get_visibility_readable(self):
         group_subgroup = objects.GroupSubgroup(FakeGitlab())
         group_subgroup.visibility = objects.GroupSubgroup.PUBLIC
-        self.assertEqual(group_subgroup.get_visibility_readable(), 'Public')
+        self.assertEqual(group_subgroup.get_visibility_readable(),
+                         dict(group_subgroup.VISIBILITY_CHOICES).get(group_subgroup.PUBLIC))
 
 
 class GroupSubgroupManagerTests(unittest.TestCase):
@@ -70,7 +71,8 @@ class GroupProjectTests(unittest.TestCase):
     def test_get_visibility_readable(self):
         group_project = objects.GroupProject(FakeGitlab())
         group_project.visibility = objects.GroupProject.PUBLIC
-        self.assertEqual(group_project.get_visibility_readable(), 'Public')
+        self.assertEqual(group_project.get_visibility_readable(),
+                         dict(group_project.VISIBILITY_CHOICES).get(group_project.PUBLIC))
 
 
 class GroupProjectManagerTests(unittest.TestCase):
@@ -87,7 +89,8 @@ class GroupMemberTests(unittest.TestCase):
     def test_get_access_level_readable(self):
         member = objects.GroupMember(FakeGitlab())
         member.access_level = objects.GroupMember.ACCESS_GUEST
-        self.assertEqual(member.get_access_level_readable(), 'Guest')
+        self.assertEqual(member.get_access_level_readable(),
+                         dict(member.ACCESS_LEVEL_CHOICES).get(member.ACCESS_GUEST))
 
 
 class GroupMemberManagerTests(unittest.TestCase):
@@ -136,7 +139,8 @@ class ProjectTests(unittest.TestCase):
     def test_get_visibility_readable(self):
         project = objects.Project(FakeGitlab())
         project.visibility = objects.Project.PUBLIC
-        self.assertEqual(project.get_visibility_readable(), 'Public')
+        self.assertEqual(project.get_visibility_readable(),
+                         dict(project.VISIBILITY_CHOICES).get(project.PUBLIC))
 
 
 class ProjectManagerTests(unittest.TestCase):

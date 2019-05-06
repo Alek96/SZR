@@ -110,6 +110,10 @@ class StatusMethodsTests(TestCase):
         obj.status = status
         return obj
 
+    def test_get_access_level_readable(self):
+        self.assertEqual(self.create_status(StatusMethods.WAITING).get_status_readable(),
+                         dict(StatusMethods.STATUS_CHOICES).get(StatusMethods.WAITING))
+
     def test_is_started_status_waiting(self):
         self.assertFalse(self.create_status(StatusMethods.WAITING).is_started())
         self.assertFalse(self.create_status(StatusMethods.READY).is_started())
@@ -134,6 +138,9 @@ class AbstractTaskStatusTests(TestCase):
 class ModelLinksMethodsTests(TestCase):
     def setUp(self):
         self.model = ModelUrlsMethods()
+
+    def test_get_name(self):
+        self.assertEqual(self.model.get_name, str(self.model))
 
     def test_edit_url(self):
         self.assertEqual(self.model.edit_url, '#')
@@ -239,6 +246,10 @@ class AbstractTaskGroupTests(TestCase, test_models.TaskCreateMethods):
         self.assertEqual(task_group.finished_tasks_number, 2)
         self.assertEqual(task_group.finished_tasks_number, 2)
 
+    def test_get_name(self):
+        task_group = self.create_task_group()
+        self.assertEqual(task_group.get_name, 'Task Group: {}'.format(task_group.name))
+
 
 class AbstractTaskNotImplementedTests(TestCase):
     def test_get_task_path_raise_error(self):
@@ -249,7 +260,7 @@ class AbstractTaskNotImplementedTests(TestCase):
 class AbstractTaskTests(TestCase, test_models.TaskCreateMethods):
     def test_task_name(self):
         task = self.create_task()
-        self.assertEqual(task.task_name, str(task))
+        self.assertEqual(task.get_name, str(task))
 
     def test_after_creating_with_status_waiting_celery_task_is_not_created(self):
         task = self.create_task(status=StatusMethods.WAITING)

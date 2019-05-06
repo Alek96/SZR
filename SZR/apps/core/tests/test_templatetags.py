@@ -33,3 +33,16 @@ class CallMethodTest(SimpleTestCase):
         rendered_template = template_to_render.render(context)
         self.assertInHTML('10', rendered_template)
         self.assertEqual(rendered_template, '10')
+
+
+class NameTest(SimpleTestCase):
+    def test_rendered(self):
+        obj = {}
+        context = Context({'obj': obj})
+        template_to_render = Template(
+            '{% load core_extras %}'
+            '{{ obj|name }}'
+        )
+        rendered_template = template_to_render.render(context)
+        self.assertInHTML('{}'.format(dict.__name__), rendered_template)
+        self.assertEqual(rendered_template, '{}'.format(dict.__name__))

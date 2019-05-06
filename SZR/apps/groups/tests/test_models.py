@@ -61,7 +61,7 @@ class GitlabGroupModelUnitTests(TestCase):
         gitlab_group = models.GitlabGroup.objects.create()
         subgroup_list = self._prepare_task_groups(AddSubgroupCreateMethods, gitlab_group)
 
-        unfinished_task_list = gitlab_group.get_unfinished_add_subgroup_group()
+        unfinished_task_list = gitlab_group.get_unfinished_add_subgroup_list()
         self.assertEqual(len(unfinished_task_list), 3)
         # sorted by execute_date in descending order
         self.assertEqual(unfinished_task_list[0].id, subgroup_list[2].id)
@@ -72,7 +72,7 @@ class GitlabGroupModelUnitTests(TestCase):
         gitlab_group = models.GitlabGroup.objects.create()
         member_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_group)
 
-        unfinished_task_list = gitlab_group.get_unfinished_add_member_group()
+        unfinished_task_list = gitlab_group.get_unfinished_add_member_list()
         self.assertEqual(len(unfinished_task_list), 3)
         # sorted by execute_date in descending order
         self.assertEqual(unfinished_task_list[0].id, member_list[2].id)
@@ -98,7 +98,7 @@ class GitlabGroupModelUnitTests(TestCase):
         gitlab_group = models.GitlabGroup.objects.create()
         subgroup_list = self._prepare_task_groups(AddSubgroupCreateMethods, gitlab_group)
 
-        finished_task_list = gitlab_group.get_finished_add_subgroup_group()
+        finished_task_list = gitlab_group.get_finished_add_subgroup_list()
         self.assertEqual(len(finished_task_list), 2)
         # sorted by finished_date
         self.assertEqual(finished_task_list[0].id, subgroup_list[3].id)
@@ -108,7 +108,7 @@ class GitlabGroupModelUnitTests(TestCase):
         gitlab_group = models.GitlabGroup.objects.create()
         member_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_group)
 
-        finished_task_list = gitlab_group.get_finished_add_member_group()
+        finished_task_list = gitlab_group.get_finished_add_member_list()
         self.assertEqual(len(finished_task_list), 2)
         # sorted by finished_date
         self.assertEqual(finished_task_list[0].id, member_list[3].id)
@@ -230,7 +230,7 @@ class AddSubgroupTests(AddSubgroupCreateMethods, core_test_models.AbstractTaskTe
 
     def test_task_name(self):
         task = self.create_task()
-        self.assertEqual(task.task_name, 'Create subgroup: {}'.format(task.name))
+        self.assertEqual(task.get_name, 'Create subgroup: {}'.format(task.name))
 
     def test_edit_url(self):
         task = self.create_task()
@@ -255,7 +255,7 @@ class AddProjectTests(AddProjectCreateMethods, core_test_models.AbstractTaskTest
 
     def test_task_name(self):
         task = self.create_task()
-        self.assertEqual(task.task_name, 'Create project: {}'.format(task.name))
+        self.assertEqual(task.get_name, 'Create project: {}'.format(task.name))
 
     def test_edit_url(self):
         task = self.create_task()
@@ -271,7 +271,7 @@ class AddProjectTests(AddProjectCreateMethods, core_test_models.AbstractTaskTest
 class AddMemberTests(AddMemberCreateMethods, core_test_models.AbstractTaskTests):
     def test_task_name(self):
         task = self.create_task()
-        self.assertEqual(task.task_name, 'Add user: {}'.format(task.username))
+        self.assertEqual(task.get_name, 'Add user: {}'.format(task.username))
 
     def test_edit_url(self):
         task = self.create_task()

@@ -15,49 +15,79 @@ class GitlabGroup(core_models.AbstractGitlabModel):
     def __repr__(self):
         return self.__str__()
 
-    def get_unfinished_task_list(self):
-        add_subgroup_group = self.get_unfinished_add_subgroup_group()
-        add_member_group = self.get_unfinished_add_member_group()
+    def get_unfinished_task_list(self, include_groups=False):
+        task_group_list = self.get_unfinished_task_group_list() if include_groups else []
+        add_subgroup_list = self.get_unfinished_add_subgroup_list(include_groups)
+        add_project_list = self.get_unfinished_add_project_list(include_groups)
+        add_member_list = self.get_unfinished_add_member_list(include_groups)
 
         return sorted(
-            chain(add_subgroup_group, add_member_group),
+            chain(task_group_list, add_subgroup_list, add_project_list, add_member_list),
             key=lambda instance: instance.execute_date,
             reverse=True)
 
-    def get_unfinished_add_subgroup_group(self):
-        return self._get_unfinished_task_list(AddSubgroup)
+    def get_unfinished_task_group_list(self):
+        return TaskGroup.objects.filter(Q(gitlab_group=self) & Q(finished_date__isnull=True)).order_by('-execute_date')
 
-    def get_unfinished_add_member_group(self):
-        return self._get_unfinished_task_list(AddMember)
+    def get_unfinished_add_subgroup_list(self, include_groups=False):
+        return self._get_unfinished_task_list(AddSubgroup, include_groups)
 
-    def _get_unfinished_task_list(self, model):
-        return model.objects.filter(
-            Q(gitlab_group=self) & (
-                Q(status=model.WAITING) |
-                Q(status=model.READY) |
-                Q(status=model.RUNNING)
-            )).order_by('-execute_date')
+    def get_unfinished_add_project_list(self, include_groups=False):
+        return self._get_unfinished_task_list(AddProject, include_groups)
 
-    def get_finished_task_list(self):
-        add_subgroup_group = self.get_finished_add_subgroup_group()
-        add_member_group = self.get_finished_add_member_group()
+    def get_unfinished_add_member_list(self, include_groups=False):
+        return self._get_unfinished_task_list(AddMember, include_groups)
+
+    def _get_unfinished_task_list(self, model, include_groups=False):
+        if include_groups:
+            return model.objects.filter(
+                Q(gitlab_group=self) & (
+                    Q(status=model.WAITING) |
+                    Q(status=model.READY) |
+                    Q(status=model.RUNNING)) &
+                Q(task_group_id__isnull=True)).order_by('-execute_date')
+        else:
+            return model.objects.filter(
+                Q(gitlab_group=self) & (
+                    Q(status=model.WAITING) |
+                    Q(status=model.READY) |
+                    Q(status=model.RUNNING))).order_by('-execute_date')
+
+    def get_finished_task_list(self, include_groups=False):
+        task_group_list = self.get_finished_task_group_list() if include_groups else []
+        add_subgroup_list = self.get_finished_add_subgroup_list(include_groups)
+        add_project_list = self.get_finished_add_project_list(include_groups)
+        add_member_list = self.get_finished_add_member_list(include_groups)
 
         return sorted(
-            chain(add_subgroup_group, add_member_group),
+            chain(task_group_list, add_subgroup_list, add_project_list, add_member_list),
             key=lambda instance: instance.finished_date)
 
-    def get_finished_add_subgroup_group(self):
-        return self._get_finished_task_list(AddSubgroup)
+    def get_finished_task_group_list(self):
+        return TaskGroup.objects.filter(Q(gitlab_group=self) & Q(finished_date__isnull=False))
 
-    def get_finished_add_member_group(self):
-        return self._get_finished_task_list(AddMember)
+    def get_finished_add_subgroup_list(self, include_groups=False):
+        return self._get_finished_task_list(AddSubgroup, include_groups)
 
-    def _get_finished_task_list(self, model):
-        return model.objects.filter(
-            Q(gitlab_group=self) & (
-                Q(status=model.SUCCEED) |
-                Q(status=model.FAILED)
-            ))
+    def get_finished_add_project_list(self, include_groups=False):
+        return self._get_finished_task_list(AddProject, include_groups)
+
+    def get_finished_add_member_list(self, include_groups=False):
+        return self._get_finished_task_list(AddMember, include_groups)
+
+    def _get_finished_task_list(self, model, include_groups=False):
+        if include_groups:
+            return model.objects.filter(
+                Q(gitlab_group=self) & (
+                    Q(status=model.SUCCEED) |
+                    Q(status=model.FAILED) &
+                    Q(task_group_id__isnull=True)))
+        else:
+            return model.objects.filter(
+                Q(gitlab_group=self) & (
+                    Q(status=model.SUCCEED) |
+                    Q(status=model.FAILED)
+                ))
 
 
 class GitlabProject(core_models.AbstractGitlabModel):
@@ -158,7 +188,7 @@ class AddSubgroup(AbstractTask, core_models.AbstractVisibilityLevel):
                 self.new_gitlab_group = GitlabGroup.objects.create()
 
     @property
-    def task_name(self):
+    def get_name(self):
         return _('Create subgroup: {}'.format(self.name))
 
     @property
@@ -211,7 +241,7 @@ class AddProject(AbstractTask, core_models.AbstractVisibilityLevel):
                 self.new_gitlab_project = GitlabProject.objects.create()
 
     @property
-    def task_name(self):
+    def get_name(self):
         return _('Create project: {}'.format(self.name))
 
     @property
@@ -234,7 +264,7 @@ class AddMember(AbstractTask, core_models.AbstractAccessLevel):
     new_gitlab_user = models.ForeignKey(core_models.GitlabUser, on_delete=models.CASCADE, null=True, blank=True)
 
     @property
-    def task_name(self):
+    def get_name(self):
         return _('Add user: {}'.format(self.username))
 
     @property
