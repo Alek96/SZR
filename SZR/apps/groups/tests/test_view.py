@@ -55,10 +55,12 @@ class DetailPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
 
         self.assertIn('group', response.context)
         self.assertIn('sidebar', response.context)
-        self.assertIn('unfinished_task_list', response.context)
+        self.assertIn('unfinished_add_subgroup_list', response.context)
+        self.assertIn('unfinished_add_project_list', response.context)
         self.assertIsInstance(response.context['group'], objects.Group)
         self.assertIsInstance(response.context['sidebar'], GroupSidebar)
-        self.assertIsInstance(response.context['unfinished_task_list'], QuerySet)
+        self.assertIsInstance(response.context['unfinished_add_subgroup_list'], QuerySet)
+        self.assertIsInstance(response.context['unfinished_add_project_list'], QuerySet)
 
 
 class MembersPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
@@ -662,6 +664,142 @@ class EditMemberTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
                          reverse('groups:future_group_tasks', kwargs={'task_id': self.parent_task.id}))
 
 
+class NewMembersFromFilePageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_members_from_file'
+    args = {'group_id': '1'}
+
+    def setUp(self):
+        super().setUp()
+        for key, value in test_forms.MembersFromFileFormTests.valid_file_data.items():
+            value.file.seek(0)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), {**test_forms.MembersFromFileFormTests.valid_form_data,
+                                                     **test_forms.MembersFromFileFormTests.valid_file_data})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('groups:tasks', kwargs=self.args))
+
+
+class FutureNewMembersFromFilePageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_members_from_file'
+    args = {'task_id': None}
+
+    def setUp(self):
+        super().setUp()
+        self.parent_task = test_models.AddSubgroupCreateMethods().create_parent_task()
+        self.args['task_id'] = self.parent_task.id
+
+        for key, value in test_forms.MembersFromFileFormTests.valid_file_data.items():
+            value.file.seek(0)
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), {**test_forms.MembersFromFileFormTests.valid_form_data,
+                                                     **test_forms.MembersFromFileFormTests.valid_file_data})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url,
+                         reverse('groups:future_group_tasks', kwargs=self.args))
+
+
+class NewSubgroupsAndMembersFromFilePageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_subgroup_and_members_from_file'
+    args = {'group_id': '1'}
+
+    def setUp(self):
+        super().setUp()
+        for key, value in test_forms.SubgroupAndMembersFromFileFormTests.valid_file_data.items():
+            value.file.seek(0)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), {**test_forms.SubgroupAndMembersFromFileFormTests.valid_form_data,
+                                                     **test_forms.SubgroupAndMembersFromFileFormTests.valid_file_data})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('groups:tasks', kwargs=self.args))
+
+
+class FutureNewSubgroupsAndMembersFromFilePageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'new_subgroup_and_members_from_file'
+    args = {'task_id': None}
+
+    def setUp(self):
+        super().setUp()
+        self.parent_task = test_models.AddSubgroupCreateMethods().create_parent_task()
+        self.args['task_id'] = self.parent_task.id
+
+        for key, value in test_forms.SubgroupAndMembersFromFileFormTests.valid_file_data.items():
+            value.file.seek(0)
+
+    @LoginMethods.login_wrapper
+    def test_page_not_found(self):
+        self.args['task_id'] += 1
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 404)
+
+    @LoginMethods.login_wrapper
+    def test_page_get(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_not_valid_data(self):
+        response = self.client.post(self.get_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'groups/form_base_site.html')
+
+    @LoginMethods.login_wrapper
+    def test_page_post_valid_data(self):
+        response = self.client.post(self.get_url(), {**test_forms.SubgroupAndMembersFromFileFormTests.valid_form_data,
+                                                     **test_forms.SubgroupAndMembersFromFileFormTests.valid_file_data})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url,
+                         reverse('groups:future_group_tasks', kwargs=self.args))
+
+
 class FutureGroupDetailPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'future_group_detail'
     args = {'task_id': None}
@@ -685,10 +823,12 @@ class FutureGroupDetailPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTes
 
         self.assertIn('task', response.context)
         self.assertIn('sidebar', response.context)
-        self.assertIn('unfinished_task_list', response.context)
+        self.assertIn('unfinished_add_subgroup_list', response.context)
+        self.assertIn('unfinished_add_project_list', response.context)
         self.assertIsInstance(response.context['task'], models.AddSubgroup)
         self.assertIsInstance(response.context['sidebar'], FutureGroupSidebar)
-        self.assertIsInstance(response.context['unfinished_task_list'], QuerySet)
+        self.assertIsInstance(response.context['unfinished_add_subgroup_list'], QuerySet)
+        self.assertIsInstance(response.context['unfinished_add_project_list'], QuerySet)
 
 
 class FutureGroupMembersPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):

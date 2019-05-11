@@ -246,7 +246,7 @@ def new_member(request, group_id):
 @login_required
 def new_member_task(request, group_id=None, task_group_id=None, task_id=None):
     task_group = get_object_or_404(models.TaskGroup, id=task_group_id) if task_group_id else None
-    parent_task = get_object_or_404(models.AddMember, id=task_id) if task_id else None
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
     form = forms.AddMemberForm(request.POST or None)
     context = {
         "form": form,
@@ -279,13 +279,48 @@ def edit_member_task(request, task_id):
 
 
 @login_required
+def new_members_from_file(request, group_id=None, task_id=None):
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
+    form = forms.MembersFromFileForm(request.POST or None, request.FILES or None)
+    context = {
+        "form": form,
+        "page_title": 'Add members from file',
+        "fields_title": 'Add members from file',
+    }
+    try:
+        model = form.save(group_id=group_id, parent_task=parent_task, user_id=request.user.id)
+    except FormNotValidError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.tasks_page_url)
+
+
+@login_required
+def new_subgroup_and_members_from_file(request, group_id=None, task_id=None):
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
+    form = forms.SubgroupAndMembersFromFileForm(request.POST or None, request.FILES or None)
+    context = {
+        "form": form,
+        "page_title": 'Add members from file',
+        "fields_title": 'Add members from file',
+    }
+    try:
+        model = form.save(group_id=group_id, parent_task=parent_task, user_id=request.user.id)
+    except FormNotValidError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.tasks_page_url)
+
+
+@login_required
 def future_group_detail(request, task_id):
     task = get_object_or_404(models.AddSubgroup, id=task_id)
     gitlab_group = task.new_gitlab_group
     context = {
         'task': task,
         'sidebar': FutureGroupSidebar(task),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_subgroup_list(),
+        'unfinished_add_subgroup_list': gitlab_group.get_unfinished_add_subgroup_list(),
+        'unfinished_add_project_list': gitlab_group.get_unfinished_add_project_list(),
     }
     return render(request, 'groups/tasks/detail.html', context)
 

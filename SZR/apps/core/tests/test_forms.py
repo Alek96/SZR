@@ -17,6 +17,7 @@ class BaseFormTest(LoginMethods):
     valid_form_data = {
         'name': "My Name",
     }
+    valid_file_data = None
     mandatory_fields = ['name']
     readonly_fields = ['status']
 
@@ -25,6 +26,12 @@ class BaseFormTest(LoginMethods):
     #     self.assertEqual(self.model_class, self.form_class.Meta.model)
     #     self.assertEqual(self.readonly_fields, self.form_class._readonly_fields)
 
+    def setUp(self):
+        super().setUp()
+        if self.valid_file_data:
+            for key, value in self.valid_file_data.items():
+                value.file.seek(0)
+
     def create_model(self, **kwargs):
         return self.model_class.objects.create(**kwargs)
 
@@ -32,7 +39,7 @@ class BaseFormTest(LoginMethods):
         self.form_class()
 
     def test_valid_data(self):
-        form = self.form_class(self.valid_form_data)
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
         self.assertTrue(form.is_valid())
         for key, value in self.valid_form_data.items():
             self.assertEqual(form.cleaned_data[key], value)
@@ -45,7 +52,7 @@ class BaseFormTest(LoginMethods):
 
     def test_readonly_fields_are_disabled(self):
         def test(instance=None):
-            form = self.form_class(self.valid_form_data, instance=instance)
+            form = self.form_class(self.valid_form_data, self.valid_file_data, instance=instance)
             for field_name in self.readonly_fields:
                 self.assertTrue(form.fields[field_name].disabled)
 
@@ -53,7 +60,7 @@ class BaseFormTest(LoginMethods):
         test(self.create_model())
 
     def test_readonly_fields_are_hidden_for_new_model(self):
-        form = self.form_class(self.valid_form_data)
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
         for field_name in self.readonly_fields:
             self.assertIsInstance(form.fields[field_name].widget, HiddenInput)
 
@@ -61,16 +68,18 @@ class BaseFormTest(LoginMethods):
 
     def test_if_status_is_finished_disable_all_fields(self):
         model = self.create_model(status=self.model_class.SUCCEED)
-        form = self.form_class(self.valid_form_data, instance=model)
+        form = self.form_class(self.valid_form_data, self.valid_file_data, instance=model)
 
         for name, field in form.fields.items():
             self.assertTrue(form.fields[name].disabled, 'Field - {0}'.format(name))
 
     def test_save(self):
-        form = self.form_class(self.valid_form_data)
-        with mock.patch.object(form, '_save') as mock_save:
-            model = form.save()
-        mock_save.assert_called_once_with(model=model)
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
+        with mock.patch.object(form, '_pre_save') as mock_pre_save:
+            with mock.patch.object(form, '_post_save') as mock_post_save:
+                model = form.save()
+        mock_pre_save.assert_called_once_with(model=model)
+        mock_post_save.assert_called_once_with(model=model)
         self.assertIsInstance(model, self.model_class)
 
     def test_save_raise_FormNotValidError_if_not_valid(self):
@@ -80,14 +89,14 @@ class BaseFormTest(LoginMethods):
 
     def test_save_raise_FormError_if_try_saving_existing_model(self):
         model = self.create_model()
-        form = self.form_class(self.valid_form_data, instance=model)
+        form = self.form_class(self.valid_form_data, self.valid_file_data, instance=model)
         with self.assertRaises(FormError) as err:
             form.save()
         self.assertIn('Cannot save', str(err.exception))
 
     def test_update(self):
         model = self.create_model()
-        form = self.form_class(self.valid_form_data, instance=model)
+        form = self.form_class(self.valid_form_data, self.valid_file_data, instance=model)
         with mock.patch.object(form, '_update') as mock_save:
             new_model = form.update()
         mock_save.assert_called_once_with(model=new_model)
@@ -101,7 +110,7 @@ class BaseFormTest(LoginMethods):
             form.update()
 
     def test_save_raise_FormError_if_try_saving_not_existing_model(self):
-        form = self.form_class(self.valid_form_data)
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
         with self.assertRaises(FormError) as err:
             form.update()
         self.assertIn('Cannot update', str(err.exception))
@@ -143,7 +152,7 @@ class BaseTaskGroupFormTest(BaseFormTest):
         'name': "My Name",
     }
     mandatory_fields = ['name']
-    readonly_fields = ['finished_date']
+    readonly_fields = ['status', 'finished_date', 'tasks_number', 'finished_tasks_number']
 
     def create_model(self, status=None, **kwargs):
         task_group = self.model_methods.create_task_group(**kwargs)
@@ -153,31 +162,19 @@ class BaseTaskGroupFormTest(BaseFormTest):
 
         return task_group
 
-    def test_field_status_is_hidden_for_new_model(self):
-        form = self.form_class(self.valid_form_data)
-        self.assertIsInstance(form.fields['status'].widget, HiddenInput)
-
-    def test_field_tasks_number_is_hidden_for_new_model(self):
-        form = self.form_class(self.valid_form_data)
-        self.assertIsInstance(form.fields['tasks_number'].widget, HiddenInput)
-
-    def test_field_finished_tasks_number_is_hidden_for_new_model(self):
-        form = self.form_class(self.valid_form_data)
-        self.assertIsInstance(form.fields['finished_tasks_number'].widget, HiddenInput)
-
     def test_field_status_has_initial_value_copied_from_model(self):
         model = self.create_model()
-        form = self.form_class(self.valid_form_data, instance=model)
+        form = self.form_class(instance=model)
         self.assertEqual(form.fields['status'].initial, model.status)
 
     def test_field_tasks_number_has_initial_value_copied_from_model(self):
         model = self.create_model()
-        form = self.form_class(self.valid_form_data, instance=model)
+        form = self.form_class(instance=model)
         self.assertEqual(form.fields['tasks_number'].initial, model.tasks_number)
 
     def test_field_finished_tasks_number_has_initial_value_copied_from_model(self):
         model = self.create_model()
-        form = self.form_class(self.valid_form_data, instance=model)
+        form = self.form_class(instance=model)
         self.assertEqual(form.fields['finished_tasks_number'].initial, model.finished_tasks_number)
 
 

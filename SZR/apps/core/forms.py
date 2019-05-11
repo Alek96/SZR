@@ -49,13 +49,23 @@ class BaseForm(forms.ModelForm):
             raise FormNotValidError(self.errors.as_data())
 
         model = super().save(commit=False)
-        self._save(model=model, **kwargs)
+        self._pre_save(model=model, **kwargs)
         model.save()
+        self._post_save(model=model, **kwargs)
         return model
 
-    def _save(self, **kwargs):
+    def _pre_save(self, **kwargs):
         """
         Here Children class can set special attributes to creating model
+
+        :param task: task that is being created
+        :param kwargs: special parameters
+        :return: None
+        """
+
+    def _post_save(self, **kwargs):
+        """
+        Here Children class can set special action to creating model
 
         :param task: task that is being created
         :param kwargs: special parameters
@@ -86,7 +96,7 @@ class BaseForm(forms.ModelForm):
 
 
 class BaseTaskGroupForm(BaseForm):
-    _readonly_fields = ['finished_date']
+    _readonly_fields = ['status', 'finished_date', 'tasks_number', 'finished_tasks_number']
 
     status = forms.CharField(max_length=20, disabled=True, required=False)
     tasks_number = forms.IntegerField(disabled=True, required=False)
@@ -113,10 +123,6 @@ class BaseTaskGroupForm(BaseForm):
             self.fields['status'].initial = instance.status
             self.fields['tasks_number'].initial = instance.tasks_number
             self.fields['finished_tasks_number'].initial = instance.finished_tasks_number
-        else:
-            self.fields['status'].widget = forms.HiddenInput()
-            self.fields['tasks_number'].widget = forms.HiddenInput()
-            self.fields['finished_tasks_number'].widget = forms.HiddenInput()
 
 
 class BaseTaskForm(BaseForm):
@@ -147,6 +153,6 @@ class BaseTaskForm(BaseForm):
         :return: None
         """
 
-    def _save(self, model, user_id, task_group=None, **kwargs):
+    def _pre_save(self, model, user_id, task_group=None, **kwargs):
         model.owner = models.GitlabUser.objects.get(user_id=user_id)
         model.task_group = task_group

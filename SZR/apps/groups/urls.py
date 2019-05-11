@@ -21,6 +21,10 @@ urlpatterns = [
     path('<int:group_id>/tasks/add_subgroup/new/', views.new_subgroup_task, name='new_subgroup_task'),
     path('<int:group_id>/tasks/add_project/new/', views.new_project_task, name='new_project_task'),
     path('<int:group_id>/tasks/add_member/new/', views.new_member_task, name='new_member_task'),
+    path('<int:group_id>/tasks/add_member/new_members_from_file/', views.new_members_from_file,
+         name='new_members_from_file'),
+    path('<int:group_id>/tasks/add_member/new_subgroup_and_members_from_file/',
+         views.new_subgroup_and_members_from_file, name='new_subgroup_and_members_from_file'),
 
     path('tasks/task_group/<int:task_group_id>/edit/', views.edit_task_group, name='edit_task_group'),
     path('tasks/task_group/<int:task_group_id>/add_subgroup/new/', views.new_subgroup_task, name='new_subgroup_task'),
@@ -38,6 +42,10 @@ urlpatterns = [
     path('tasks/add_subgroup/<int:task_id>/add_subgroup/new', views.new_subgroup_task, name='new_subgroup_task'),
     path('tasks/add_subgroup/<int:task_id>/add_project/new', views.new_project_task, name='new_project_task'),
     path('tasks/add_subgroup/<int:task_id>/add_member/new', views.new_member_task, name='new_member_task'),
+    path('tasks/add_subgroup/<int:task_id>/add_member/new_members_from_file', views.new_members_from_file,
+         name='new_members_from_file'),
+    path('tasks/add_subgroup/<int:task_id>/add_member/new_subgroup_and_members_from_file',
+         views.new_subgroup_and_members_from_file, name='new_subgroup_and_members_from_file'),
 
     path('ajax/load-subgroups/<int:group_id>/', views.ajax_load_subgroups, name='ajax_load_subgroups'),
     path('ajax/load-subgroups-and-projects/<int:group_id>/', views.ajax_load_subgroups_and_projects,
