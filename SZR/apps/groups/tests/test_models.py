@@ -4,8 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 from groups import models
-from groups.tests.models import AbstractTaskCreateMethods, AddSubgroupCreateMethods, AddProjectCreateMethods, \
-    AddMemberCreateMethods
+from groups.tests.models import AbstractTaskCreateMethods, AddSubgroupCreateMethods, AddMemberCreateMethods
 
 
 class GitlabGroupModelUnitTests(TestCase):
@@ -104,16 +103,6 @@ class GitlabGroupModelUnitTests(TestCase):
         self.assertEqual(finished_task_list[1].id, subgroup_list[4].id)
         self.assertEqual(finished_task_list[2].id, member_list[3].id)
         self.assertEqual(finished_task_list[3].id, member_list[4].id)
-
-
-class GitlabProjectModelUnitTests(TestCase):
-    def test_representation(self):
-        project = models.GitlabProject.objects.create()
-        self.assertEqual(repr(project), "<Project: {}>".format(project.id))
-
-    def test_string_representation(self):
-        project = models.GitlabProject.objects.create()
-        self.assertEqual(str(project), "<Project: {}>".format(project.id))
 
 
 class TaskGroupTests(AbstractTaskCreateMethods, core_test_models.AbstractTaskGroupTests):
@@ -215,31 +204,6 @@ class AddSubgroupTests(AddSubgroupCreateMethods, core_test_models.AbstractTaskTe
         self.assertEqual(
             task.edit_url,
             reverse('groups:edit_subgroup_task', kwargs={'task_id': task.id}))
-
-    def test_delete_url(self):
-        task = self.create_task()
-        self.assertEqual(task.delete_url, '#')
-
-
-class AddProjectTests(AddProjectCreateMethods, core_test_models.AbstractTaskTests):
-    def test_creating_obj_create_new_gitlab_project(self):
-        task = self.create_task()
-        self.assertTrue(task.new_gitlab_project)
-
-    def test_creating_with_new_gitlab_project_does_not_create_new_gitlab_project(self):
-        gitlab_project = models.GitlabProject.objects.create()
-        task = self.create_task(new_gitlab_project=gitlab_project)
-        self.assertEqual(task.new_gitlab_project, gitlab_project)
-
-    def test_task_name(self):
-        task = self.create_task()
-        self.assertEqual(task.get_name, 'Create project: {}'.format(task.name))
-
-    def test_edit_url(self):
-        task = self.create_task()
-        self.assertEqual(
-            task.edit_url,
-            reverse('groups:edit_project_task', kwargs={'task_id': task.id}))
 
     def test_delete_url(self):
         task = self.create_task()

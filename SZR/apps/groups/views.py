@@ -9,6 +9,8 @@ from django.urls import reverse
 from groups import forms
 from groups import models
 from groups.sidebar import GroupSidebar, FutureGroupSidebar
+from projects.forms import AddProjectForm
+from projects.models import AddProject
 
 
 @login_required
@@ -38,7 +40,7 @@ def detail(request, group_id):
         'group': group,
         'sidebar': GroupSidebar(group),
         'unfinished_add_subgroup_list': gitlab_group.get_unfinished_task_list(model=models.AddSubgroup),
-        'unfinished_add_project_list': gitlab_group.get_unfinished_task_list(model=models.AddProject),
+        'unfinished_add_project_list': gitlab_group.get_unfinished_task_list(model=AddProject),
     }
     return render(request, 'groups/detail.html', context)
 
@@ -178,7 +180,7 @@ def edit_subgroup_task(request, task_id):
 
 @login_required
 def new_project(request, group_id):
-    form = forms.AddProjectForm(request.POST or None)
+    form = AddProjectForm(request.POST or None)
     context = {
         "form": form,
         "page_title": 'New Project',
@@ -196,7 +198,7 @@ def new_project(request, group_id):
 def new_project_task(request, group_id=None, task_group_id=None, task_id=None):
     task_group = get_object_or_404(models.TaskGroup, id=task_group_id) if task_group_id else None
     parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
-    form = forms.AddProjectForm(request.POST or None)
+    form = AddProjectForm(request.POST or None)
     context = {
         "form": form,
         "page_title": 'Add Project Task',
@@ -212,8 +214,8 @@ def new_project_task(request, group_id=None, task_group_id=None, task_id=None):
 
 @login_required
 def edit_project_task(request, task_id):
-    task = get_object_or_404(models.AddProject, id=task_id)
-    form = forms.AddProjectForm(request.POST or None, instance=task)
+    task = get_object_or_404(AddProject, id=task_id)
+    form = AddProjectForm(request.POST or None, instance=task)
     context = {
         "form": form,
         "page_title": 'Edit Project Task',
@@ -320,7 +322,7 @@ def future_group_detail(request, task_id):
         'task': task,
         'sidebar': FutureGroupSidebar(task),
         'unfinished_add_subgroup_list': gitlab_group.get_unfinished_task_list(model=models.AddSubgroup),
-        'unfinished_add_project_list': gitlab_group.get_unfinished_task_list(model=models.AddProject),
+        'unfinished_add_project_list': gitlab_group.get_unfinished_task_list(model=AddProject),
     }
     return render(request, 'groups/tasks/detail.html', context)
 

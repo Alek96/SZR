@@ -1,12 +1,25 @@
 from core import models as core_models
 from core.tests import models as core_test_models
-from groups.tests.models import AddProjectCreateMethods
+from groups.models import GitlabGroup
+from groups.tests.models import AbstractTaskCreateMethods as groups_AbstractTaskCreateMethods
 from projects import models
 
 
-class FakeTask(models.AbstractTask):
-    _parent_task_model = 'groups.AddProject'
+class AddProjectCreateMethods(groups_AbstractTaskCreateMethods):
+    def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, name='name', path='path',
+                    **kwargs):
+        return models.AddProject.objects.create(
+            owner=owner or core_models.GitlabUser.objects.create(),
+            task_group=task_group,
+            gitlab_group=gitlab_group or (None if (task_group or parent_task) else GitlabGroup.objects.create()),
+            parent_task=parent_task,
+            name=name,
+            path=path,
+            **kwargs
+        )
 
+
+class FakeTask(models.AbstractTask):
     def _get_task_path(self):
         return 'projects.tests.tasks.FakeTask'
 

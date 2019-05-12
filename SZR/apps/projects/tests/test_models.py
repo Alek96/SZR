@@ -1,8 +1,126 @@
 from core.tests import test_models as core_test_models
 from django.core.exceptions import ValidationError
+from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from projects import models
-from projects.tests.models import AbstractTaskCreateMethods, AddMemberCreateMethods
+from projects.tests.models import AddProjectCreateMethods, AbstractTaskCreateMethods, AddMemberCreateMethods
+
+
+class GitlabProjectModelUnitTests(TestCase):
+    def test_representation(self):
+        project = models.GitlabProject.objects.create()
+        self.assertEqual(repr(project), "<Project: {}>".format(project.id))
+
+    def test_string_representation(self):
+        project = models.GitlabProject.objects.create()
+        self.assertEqual(str(project), "<Project: {}>".format(project.id))
+
+    def _prepare_task_groups(self, create_class, gitlab_project):
+        task_group_list = [
+            create_class().create_task(
+                gitlab_project=gitlab_project,
+                status=models.AddMember.WAITING),
+            create_class().create_task(
+                gitlab_project=gitlab_project,
+                status=models.AddMember.READY),
+            create_class().create_task(
+                gitlab_project=gitlab_project,
+                status=models.AddMember.RUNNING),
+            create_class().create_task(
+                gitlab_project=gitlab_project,
+                status=models.AddMember.SUCCEED,
+                finished_date=timezone.now()),
+            create_class().create_task(
+                gitlab_project=gitlab_project,
+                status=models.AddMember.FAILED,
+                finished_date=timezone.now()),
+        ]
+        # check statuses
+        self.assertEqual(task_group_list[0].status, task_group_list[0].WAITING)
+        self.assertEqual(task_group_list[1].status, task_group_list[1].READY)
+        self.assertEqual(task_group_list[2].status, task_group_list[2].RUNNING)
+        self.assertEqual(task_group_list[3].status, task_group_list[3].SUCCEED)
+        self.assertEqual(task_group_list[4].status, task_group_list[4].FAILED)
+        # check execute_date
+        self.assertLess(task_group_list[0].execute_date, task_group_list[1].execute_date)
+        self.assertLess(task_group_list[1].execute_date, task_group_list[2].execute_date)
+        self.assertLess(task_group_list[2].execute_date, task_group_list[3].execute_date)
+        self.assertLess(task_group_list[3].execute_date, task_group_list[4].execute_date)
+        # check finished_date
+        self.assertEqual(task_group_list[0].finished_date, None)
+        self.assertEqual(task_group_list[1].finished_date, None)
+        self.assertEqual(task_group_list[2].finished_date, None)
+        self.assertLess(task_group_list[3].finished_date, task_group_list[4].finished_date)
+
+        return task_group_list
+
+    def test_get_unfinished_task_list_with_model(self):
+        gitlab_project = models.GitlabProject.objects.create()
+        subgroup_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_project)
+
+        unfinished_task_list = gitlab_project.get_unfinished_task_list(model=models.AddMember)
+        self.assertEqual(len(unfinished_task_list), 3)
+        # sorted by execute_date in descending order
+        self.assertEqual(unfinished_task_list[0].id, subgroup_list[2].id)
+        self.assertEqual(unfinished_task_list[1].id, subgroup_list[1].id)
+        self.assertEqual(unfinished_task_list[2].id, subgroup_list[0].id)
+
+    def test_get_unfinished_task_list(self):
+        gitlab_project = models.GitlabProject.objects.create()
+        member_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_project)
+
+        unfinished_task_list = gitlab_project.get_unfinished_task_list()
+        self.assertEqual(len(unfinished_task_list), 3)
+        # sorted by execute_date in descending order
+        self.assertEqual(unfinished_task_list[0].id, member_list[2].id)
+        self.assertEqual(unfinished_task_list[1].id, member_list[1].id)
+        self.assertEqual(unfinished_task_list[2].id, member_list[0].id)
+
+    def test_get_finished_task_list_with_model(self):
+        gitlab_project = models.GitlabProject.objects.create()
+        subgroup_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_project)
+
+        finished_task_list = gitlab_project.get_finished_task_list(model=models.AddMember)
+        self.assertEqual(len(finished_task_list), 2)
+        # sorted by finished_date
+        self.assertEqual(finished_task_list[0].id, subgroup_list[3].id)
+        self.assertEqual(finished_task_list[1].id, subgroup_list[4].id)
+
+    def test_get_finished_task_list(self):
+        gitlab_project = models.GitlabProject.objects.create()
+        member_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_project)
+
+        finished_task_list = gitlab_project.get_finished_task_list()
+        self.assertEqual(len(finished_task_list), 2)
+        # sorted by finished_date
+        self.assertEqual(finished_task_list[0].id, member_list[3].id)
+        self.assertEqual(finished_task_list[1].id, member_list[4].id)
+
+
+class AddProjectTests(AddProjectCreateMethods, core_test_models.AbstractTaskTests):
+    def test_creating_obj_create_new_gitlab_project(self):
+        task = self.create_task()
+        self.assertTrue(task.new_gitlab_project)
+
+    def test_creating_with_new_gitlab_project_does_not_create_new_gitlab_project(self):
+        gitlab_project = models.GitlabProject.objects.create()
+        task = self.create_task(new_gitlab_project=gitlab_project)
+        self.assertEqual(task.new_gitlab_project, gitlab_project)
+
+    def test_task_name(self):
+        task = self.create_task()
+        self.assertEqual(task.get_name, 'Create project: {}'.format(task.name))
+
+    def test_edit_url(self):
+        task = self.create_task()
+        self.assertEqual(
+            task.edit_url,
+            reverse('groups:edit_project_task', kwargs={'task_id': task.id}))
+
+    def test_delete_url(self):
+        task = self.create_task()
+        self.assertEqual(task.delete_url, '#')
 
 
 class TaskGroupTests(AbstractTaskCreateMethods, core_test_models.AbstractTaskGroupTests):

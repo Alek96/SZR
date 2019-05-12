@@ -5,8 +5,11 @@ from django.db.models import QuerySet
 from django.urls import reverse
 from groups import models
 from groups.sidebar import GroupSidebar, FutureGroupSidebar
-from groups.tests import test_forms
 from groups.tests import models as test_models
+from groups.tests import test_forms
+from projects.models import AddProject
+from projects.tests.models import AddProjectCreateMethods
+from projects.tests.test_forms import AddProjectFormTests
 
 
 class GitlabWrapperAppNameCase:
@@ -410,7 +413,7 @@ class NewProjectPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
 
     @LoginMethods.login_wrapper
     def test_page_post_valid_data(self):
-        response = self.client.post(self.get_url(), test_forms.AddProjectFormTests.valid_form_data)
+        response = self.client.post(self.get_url(), AddProjectFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('groups:detail', kwargs=self.args))
 
@@ -421,8 +424,8 @@ class NewProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
 
     def setUp(self):
         super().setUp()
-        self.parent_task = test_models.AddProjectCreateMethods().create_parent_task()
-        self.task_group = test_models.AddProjectCreateMethods().create_task_group(
+        self.parent_task = AddProjectCreateMethods().create_parent_task()
+        self.task_group = AddProjectCreateMethods().create_task_group(
             parent_task=self.parent_task
         )
         self.args['task_group_id'] = self.task_group.id
@@ -446,11 +449,11 @@ class NewProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         self.assertTemplateUsed(response, 'groups/form_base_site.html')
 
     def _test_page_post_valid_data(self):
-        response = self.client.post(self.get_url(), test_forms.AddProjectFormTests.valid_form_data)
+        response = self.client.post(self.get_url(), AddProjectFormTests.valid_form_data)
         self.assertEqual(response.status_code, 302)
 
-        model = models.AddProject.objects.get(task_group=self.task_group)
-        for key, value in test_forms.AddProjectFormTests.valid_form_data.items():
+        model = AddProject.objects.get(task_group=self.task_group)
+        for key, value in AddProjectFormTests.valid_form_data.items():
             self.assertEqual(getattr(model, key), value)
 
         return response
@@ -479,8 +482,8 @@ class EditProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest)
 
     def setUp(self):
         super().setUp()
-        self.parent_task = test_models.AddProjectCreateMethods().create_parent_task()
-        self.task = test_models.AddProjectCreateMethods().create_task(
+        self.parent_task = AddProjectCreateMethods().create_parent_task()
+        self.task = AddProjectCreateMethods().create_task(
             parent_task=self.parent_task)
         self.args['task_id'] = self.task.id
 

@@ -106,6 +106,24 @@ class TasksPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
             self.assertIn(group_link, new_project_links)
 
 
+class EditProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
+    name = 'edit_project_task'
+    args = {'task_id': 1}
+
+    def setUp(self):
+        super().setUp()
+        self.parent_task = test_models.AddProjectCreateMethods().create_parent_task()
+        self.task = test_models.AddProjectCreateMethods().create_task(
+            parent_task=self.parent_task)
+        self.args['task_id'] = self.task.id
+
+    @LoginMethods.login_wrapper
+    def test_redirect(self):
+        response = self.client.get(self.get_url())
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('groups:edit_project_task', kwargs=self.args))
+
+
 class NewTaskGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
     name = 'new_task_group'
     args = {'project_id': '1'}

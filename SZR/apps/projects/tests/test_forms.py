@@ -2,11 +2,34 @@ from GitLabApi import mock_all_gitlab_url
 from core.tests import test_forms
 from core.tests.test_view import LoginMethods
 from django import forms
+from groups.tests.test_forms import BaseTaskFormTest as groups_BaseTaskFormTest
 from projects import forms
 from projects import models
 from projects.tests import models as test_models
 from projects.tests.forms import FakeTaskForm
 from projects.tests.models import FakeTask
+
+
+class AddProjectFormTests(groups_BaseTaskFormTest):
+    form_class = forms.AddProjectForm
+    model_class = models.AddProject
+    model_methods = test_models.AddProjectCreateMethods()
+    valid_form_data = {
+        'name': "Group_name",
+        'path': "Group_path",
+        # 'create_type': models.AddProject.BLANK,
+        # 'import_url': '',
+        'description': "Description",
+        'visibility': models.AddProject.PRIVATE,
+    }
+    mandatory_fields = ['name', 'path']
+    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_save_in_gitlab(self):
+        form = forms.AddProjectForm(self.valid_form_data)
+        form.save_in_gitlab(user_id=self.user.id, group_id=1)
 
 
 class TaskGroupFormTests(test_forms.BaseTaskGroupFormTest):
