@@ -2,7 +2,12 @@
 {% load staticfiles %}
 
 {% block title %}Groups Index{% endblock %}
-{% block project_active %}active{% endblock %}
+
+{% block navbar %}
+    {% with project_active=True %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock %}
 
 
 {% block head %}

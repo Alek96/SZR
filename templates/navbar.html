@@ -11,20 +11,20 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 {% if user.is_authenticated %}
-                <li class="nav-item {% block home_active %}{% endblock %}">
+                <li class="nav-item {% if home_active %}active{% endif %}">
                     <a class="nav-link" href="{% url 'home' %}">
                         <i class="fa fa-home"></i>
                         Home
                         <span class="sr-only">(current)</span>
                     </a>
                 </li>
-                <li class="nav-item {% block project_active %}{% endblock %}">
+                <li class="nav-item {% if project_active %}active{% endif %}">
                     <a class="nav-link" href="{% url 'projects:index' %}">
                         <i class="fa fa-bookmark"></i>
                         Projects
                     </a>
                 </li>
-                <li class="nav-item {% block group_active %}{% endblock %}">
+                <li class="nav-item {% if group_active %}active{% endif %}">
                     <a class="nav-link" href="{% url 'groups:index' %}">
                         <i class="fa fa-folder"></i>
                         Groups
@@ -56,14 +56,14 @@
                 </li>
                 {% endif %}
 
-                <li class="nav-item {% block logout_active %}{% endblock %}">
+                <li class="nav-item {% if logout_active %}active{% endif %}">
                     <a class="nav-link" href="{% url 'core:logout' %}">
                         <i class="fa fa-power-off"></i>
                         Log out
                     </a>
                 </li>
                 {% else %}
-                <li class="nav-item {% block login_active %}{% endblock %}">
+                <li class="nav-item {% if login_active %}active{% endif %}">
                     <a class="nav-link" href="{% url 'core:login' %}">
                         <i class="fa fa-power-off"></i>
                         Log in
