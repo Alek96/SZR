@@ -9,6 +9,8 @@
                     <div class="col-sm-6">
                         {% if task|name == 'AddSubgroup' %}
                             <a href="{% url 'groups:future_group_detail' task.id %}">{{ task.get_name }} </a>
+                        {% elif task|name == 'AddProject' %}
+                            <a href="{% url 'projects:future_project_detail' task.id %}">{{ task.get_name }} </a>
                         {% else %}
                             {{ task.get_name }}
                         {% endif %}
@@ -24,7 +26,7 @@
             </div>
             {% if task|name == 'TaskGroup' %}
                 <ul class="group-list-tree">
-                    {% include 'groups/ajax/load_unfinished_task_list.html' with unfinished_task_list=task.task_set %}
+                    {% include 'core/ajax/load_unfinished_task_list.html' with unfinished_task_list=task.task_set %}
                 </ul>
             {% endif %}
         </li>

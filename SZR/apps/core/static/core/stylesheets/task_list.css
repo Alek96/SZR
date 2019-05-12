@@ -1,0 +1,71 @@
+
+.list-group.list-group-root {
+    padding: 0;
+    overflow: hidden;
+
+    border-color: #ccc;
+    -webkit-box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.2);
+    box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.2);
+
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.list-group.list-group-root .group-list-tree {
+    list-style-type: none;
+}
+
+.list-group.list-group-root .group-list-tree li {
+    font: 200 18px/1.5 Helvetica, Verdana, sans-serif;
+}
+
+.list-group.list-group-root .group-list-tree li:last-child {
+    border: none;
+}
+
+
+.list-group.list-group-root .list-group-item-2 {
+    text-decoration: none;
+    color: #000;
+    display: block;
+    /*width: 200px;*/
+    border-bottom: 1px solid #ccc;
+
+    -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+    -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+    -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+    -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+    transition: font-size 0.3s ease, background-color 0.3s ease;
+}
+
+.list-group.list-group-root .list-group-item-2:hover {
+    font-size: 20px;
+    background: rgba(0, 0, 100, 0.1);
+}
+
+.list-group.list-group-root .list-group-item-subgroup:before {
+    font-family: "Font Awesome 5 Free";
+    margin-right: 10px;
+    content: "\f07b";
+}
+
+.list-group.list-group-root .list-group-item-subgroup.active:before {
+    font-family: "Font Awesome 5 Free";
+    content: "\f07c";
+}
+
+.list-group.list-group-root .list-group-item-project:before {
+    font-family: "Font Awesome 5 Free";
+    margin-right: 15px;
+    content: "\f02e";
+}
+
+.list-group-submenu {
+    display: none;
+}
+
+.group-list-tree {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 1em;
+}

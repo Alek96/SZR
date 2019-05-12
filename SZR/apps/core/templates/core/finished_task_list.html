@@ -2,9 +2,8 @@
 {% load core_extras %}
 
 
-<script src="{% static 'groups/javascripts/tasks.js' %}"></script>
-<link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/group_list.css' %}"/>
-<link rel="stylesheet" type="text/css" href="{% static 'groups/stylesheets/tasks.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/project_list.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/tasks.css' %}"/>
 
 
 <div class="container">
@@ -17,7 +16,7 @@
                     <div class="col-sm-2 font-weight-bold">Status</div>
                 </div>
 
-                {% include 'groups/ajax/load_unfinished_task_list.html' with unfinished_task_list=unfinished_task_list %}
+                {% include 'core/ajax/load_finished_task_list.html' with finished_task_list=finished_task_list %}
             </div>
         </div>
     </div>
