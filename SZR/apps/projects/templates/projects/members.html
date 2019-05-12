@@ -1,0 +1,97 @@
+{% extends 'sidebar.html' %}
+{% load staticfiles %}
+
+{% block title %}Projects{% endblock %}
+{% block project_active %}active{% endblock %}
+
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/projects_detail_index.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/project_list.css' %}"/>
+{% endblock %}
+
+{% block sidebar-menu %}
+    {{ block.super }}
+{% endblock %}
+
+{% block page-content-body %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Members</h1>
+            </div>
+            <div class="col">
+                <div class="row buttons-new float-right">
+                    <div class="button-new-group">
+                        <a href="{% url 'projects:new_member' project.id %}" class="badge badge-success">Add Member</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="list-group list-group-root well">
+                    <ul class="group-list-tree">
+                        {% for member in project.members.list %}
+                            <li>
+                                <div class="list-group-item-2 list-group-item-member">
+                                    <a href="#">
+                                        <span>{{ member.name }}</span>
+                                    </a>
+                                    <span>{{ member.get_access_level_readable }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>External Members</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="list-group list-group-root well">
+                    <ul class="group-list-tree">
+                        {% for member in project.members.external %}
+                            <li>
+                                <div class="list-group-item-2 list-group-item-member">
+                                    <a href="#">
+                                        <span>{{ member.name }}</span>
+                                    </a>
+                                    <span>{{ member.get_access_level_readable }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Tasks - Future Members</h1>
+            </div>
+        </div>
+    </div>
+
+    {% include 'projects/unfinished_task_list.html' %}
+
+{% endblock %}
+

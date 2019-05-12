@@ -1,0 +1,17 @@
+{% load staticfiles %}
+{% load core_extras %}
+
+
+<link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/project_list.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/tasks.css' %}"/>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group list-group-root well">
+                {% include 'projects/ajax/load_finished_task_list.html' with finished_task_list=finished_task_list %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,34 @@
+{% load staticfiles %}
+{% load core_extras %}
+
+<ul class="group-list-tree">
+    {% for task in unfinished_task_list %}
+        <li>
+            <div class="list-group-item-2 list-group-item-member">
+                <div class="row">
+                    <div class="col-sm-6">
+                        {% if task|name == 'AddSubgroup' %}
+                            <a href="{% url 'projects:future_group_detail' task.id %}">{{ task.get_name }} </a>
+                        {% elif task|name == 'AddProject' %}
+                            <a href="{% url 'projects:future_project_detail' task.id %}">{{ task.get_name }} </a>
+                        {% else %}
+                            {{ task.get_name }}
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-3">{{ task.execute_date|date:"d/m/Y H:i:s" }}</div>
+                    <div class="col-sm-2">{{ task.get_status_readable }}</div>
+                    <div class="col-sm-1">
+                        <button type="button" onclick="location.href='{{ task.edit_url }}'"
+                                class="btn btn-light btn-sm float-right edit-button">Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% if task|name == 'TaskGroup' %}
+                <ul class="group-list-tree">
+                    {% include 'projects/ajax/load_unfinished_task_list.html' with unfinished_task_list=task.task_set %}
+                </ul>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>

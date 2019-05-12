@@ -14,6 +14,7 @@ urlpatterns = [
     path('auth/', include('social_django.urls', namespace='social')),
     path('core/', include('core.urls')),
     path('groups/', include('groups.urls')),
+    path('projects/', include('projects.urls')),
     path('', home, name='home')
 ]
 

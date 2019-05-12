@@ -258,6 +258,7 @@ class MockProjectsUrls(MockUrlCRUD):
     path = 'projects'
     list_content = GitLabContent.get_project_list()
     get_content = GitLabContent.get_project()
+    roots_content = GitLabContent.get_project_list()
     create_content = GitLabContent.get_project()
 
     _mock_project_obj_url = MockProjectObjUrls()

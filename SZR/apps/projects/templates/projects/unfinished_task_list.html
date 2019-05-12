@@ -1,0 +1,24 @@
+{% load staticfiles %}
+{% load core_extras %}
+
+
+<script src="{% static 'projects/javascripts/tasks.js' %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/project_list.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/tasks.css' %}"/>
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group list-group-root well">
+                <div class="row">
+                    <div class="col-sm-6 font-weight-bold">Name</div>
+                    <div class="col-sm-3 font-weight-bold">Finished date</div>
+                    <div class="col-sm-2 font-weight-bold">Status</div>
+                </div>
+
+                {% include 'projects/ajax/load_unfinished_task_list.html' with unfinished_task_list=unfinished_task_list %}
+            </div>
+        </div>
+    </div>
+</div>

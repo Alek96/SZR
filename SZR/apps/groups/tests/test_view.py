@@ -229,7 +229,7 @@ class EditTaskGroupPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
 
     def setUp(self):
         super().setUp()
-        self.parent_task = test_models.AddSubgroupCreateMethods().create_parent_task()
+        self.parent_task = test_models.AddSubgroupCreateMethods().create_task()
         self.task_group = test_models.AddSubgroupCreateMethods().create_task_group(
             parent_task=self.parent_task
         )

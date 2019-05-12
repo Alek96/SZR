@@ -1,0 +1,14 @@
+{% load staticfiles %}
+
+<div class="container">
+    <script src="{% static 'projects/javascripts/project_list.js' %}"></script>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="list-group list-group-root well">
+                {% include 'projects/ajax/load_projects.html' with project_list=project_list %}
+            </div>
+        </div>
+    </div>
+
+</div>

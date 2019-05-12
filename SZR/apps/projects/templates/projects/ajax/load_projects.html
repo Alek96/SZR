@@ -1,0 +1,14 @@
+{% load staticfiles %}
+
+<ul class="group-list-tree">
+    {% for project in project_list %}
+        <li>
+            <div class="list-group-item-2 list-group-item-project">
+                <a href="#">
+                    <span>{{ project.name }}</span>
+                </a>
+                <span>{{ project.get_visibility_readable }}</span>
+            </div>
+        </li>
+    {% endfor %}
+</ul>

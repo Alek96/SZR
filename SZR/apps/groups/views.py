@@ -37,8 +37,8 @@ def detail(request, group_id):
     context = {
         'group': group,
         'sidebar': GroupSidebar(group),
-        'unfinished_add_subgroup_list': gitlab_group.get_unfinished_add_subgroup_list(),
-        'unfinished_add_project_list': gitlab_group.get_unfinished_add_project_list(),
+        'unfinished_add_subgroup_list': gitlab_group.get_unfinished_task_list(model=models.AddSubgroup),
+        'unfinished_add_project_list': gitlab_group.get_unfinished_task_list(model=models.AddProject),
     }
     return render(request, 'groups/detail.html', context)
 
@@ -50,7 +50,7 @@ def members(request, group_id):
     context = {
         'group': group,
         'sidebar': GroupSidebar(group),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_member_list(),
+        'unfinished_task_list': gitlab_group.get_unfinished_task_list(model=models.AddMember),
     }
     return render(request, 'groups/members.html', context)
 
@@ -319,8 +319,8 @@ def future_group_detail(request, task_id):
     context = {
         'task': task,
         'sidebar': FutureGroupSidebar(task),
-        'unfinished_add_subgroup_list': gitlab_group.get_unfinished_add_subgroup_list(),
-        'unfinished_add_project_list': gitlab_group.get_unfinished_add_project_list(),
+        'unfinished_add_subgroup_list': gitlab_group.get_unfinished_task_list(model=models.AddSubgroup),
+        'unfinished_add_project_list': gitlab_group.get_unfinished_task_list(model=models.AddProject),
     }
     return render(request, 'groups/tasks/detail.html', context)
 
@@ -332,7 +332,7 @@ def future_group_members(request, task_id):
     context = {
         'task': task,
         'sidebar': FutureGroupSidebar(task),
-        'unfinished_task_list': gitlab_group.get_unfinished_add_member_list(),
+        'unfinished_task_list': gitlab_group.get_unfinished_task_list(model=models.AddMember),
     }
     return render(request, 'groups/tasks/members.html', context)
 

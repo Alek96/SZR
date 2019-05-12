@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %}Groups Index{% endblock %}
+{% block project_active %}active{% endblock %}
+
+
+{% block head %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/projects_index.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/project_list.css' %}"/>
+{% endblock %}
+
+
+{% block body %}
+    <div class="group-body">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <h1>Groups</h1>
+                </div>
+                <div class="col">
+                    <div class="button-new-group">
+                        <a href="#" class="badge badge-success">New Project</a>
+                        {#<a href="{% url 'projects:new_project' %}" class="badge badge-success">New Project</a>#}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% include 'projects/project_list.html' with project_list=project_list %}
+    </div>
+{% endblock %}

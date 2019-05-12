@@ -140,11 +140,11 @@ class TestGitLabGroupsApi(GitLabApiTestsCases.TestCRUD, MockUrls.MockGroupsUrls)
     def get_create_args(self):
         return GitLabContent.get_new_group_args()
 
-    def test_groups_get_roots(self):
+    def test_get_roots(self):
         content = self.roots_content
 
         with HTTMock(self.get_mock_for_list_url()):
-            group_list = self.gitlab_api.groups.get_roots()
+            group_list = self._gitlab_api_mgr.get_roots()
             self.assertGreater(len(group_list), 0)
             for group_info, group in zip(content, group_list):
                 self.assertEqual(group.parent_id, None)
@@ -273,6 +273,16 @@ class TestGitLabProjectsApi(GitLabApiTestsCases.TestCRUD, MockUrls.MockProjectsU
 
     def get_create_args(self):
         return GitLabContent.get_new_project_args()
+
+    def test_get_roots(self):
+        content = self.roots_content
+
+        with HTTMock(self.get_mock_for_list_url()):
+            project_list = self._gitlab_api_mgr.get_roots()
+            self.assertGreater(len(project_list), 0)
+            for project_info, project in zip(content, project_list):
+                for key, value in project_info.items():
+                    self.assertEqual(getattr(project, key), value)
 
 
 class TestGitLabProjectChildren(GitLabApiTestsCases.TestBase):

@@ -5,7 +5,8 @@ from .development import *
 # Apps for testing
 TESTS_APPS = [
     'core.tests.apps.CoreTestConfig',
-    'groups.tests.apps.GroupsTestConfig'
+    'groups.tests.apps.GroupsTestConfig',
+    'projects.tests.apps.ProjectsTestConfig',
 ]
 
 INSTALLED_APPS = INSTALLED_APPS + TESTS_APPS

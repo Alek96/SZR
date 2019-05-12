@@ -1,4 +1,3 @@
-from core import models as core_models
 from core.tests import test_models as core_test_models
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -57,27 +56,16 @@ class GitlabGroupModelUnitTests(TestCase):
 
         return task_group_list
 
-    def test_get_unfinished_add_subgroup_group(self):
+    def test_get_unfinished_task_list_with_model(self):
         gitlab_group = models.GitlabGroup.objects.create()
         subgroup_list = self._prepare_task_groups(AddSubgroupCreateMethods, gitlab_group)
 
-        unfinished_task_list = gitlab_group.get_unfinished_add_subgroup_list()
+        unfinished_task_list = gitlab_group.get_unfinished_task_list(model=models.AddSubgroup)
         self.assertEqual(len(unfinished_task_list), 3)
         # sorted by execute_date in descending order
         self.assertEqual(unfinished_task_list[0].id, subgroup_list[2].id)
         self.assertEqual(unfinished_task_list[1].id, subgroup_list[1].id)
         self.assertEqual(unfinished_task_list[2].id, subgroup_list[0].id)
-
-    def test_get_unfinished_add_member_group(self):
-        gitlab_group = models.GitlabGroup.objects.create()
-        member_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_group)
-
-        unfinished_task_list = gitlab_group.get_unfinished_add_member_list()
-        self.assertEqual(len(unfinished_task_list), 3)
-        # sorted by execute_date in descending order
-        self.assertEqual(unfinished_task_list[0].id, member_list[2].id)
-        self.assertEqual(unfinished_task_list[1].id, member_list[1].id)
-        self.assertEqual(unfinished_task_list[2].id, member_list[0].id)
 
     def test_get_unfinished_task_list(self):
         gitlab_group = models.GitlabGroup.objects.create()
@@ -94,25 +82,15 @@ class GitlabGroupModelUnitTests(TestCase):
         self.assertEqual(unfinished_task_list[4].id, subgroup_list[1].id)
         self.assertEqual(unfinished_task_list[5].id, subgroup_list[0].id)
 
-    def test_get_finished_add_subgroup_group(self):
+    def test_get_finished_task_list_with_model(self):
         gitlab_group = models.GitlabGroup.objects.create()
         subgroup_list = self._prepare_task_groups(AddSubgroupCreateMethods, gitlab_group)
 
-        finished_task_list = gitlab_group.get_finished_add_subgroup_list()
+        finished_task_list = gitlab_group.get_finished_task_list(model=models.AddSubgroup)
         self.assertEqual(len(finished_task_list), 2)
         # sorted by finished_date
         self.assertEqual(finished_task_list[0].id, subgroup_list[3].id)
         self.assertEqual(finished_task_list[1].id, subgroup_list[4].id)
-
-    def test_get_finished_add_member_group(self):
-        gitlab_group = models.GitlabGroup.objects.create()
-        member_list = self._prepare_task_groups(AddMemberCreateMethods, gitlab_group)
-
-        finished_task_list = gitlab_group.get_finished_add_member_list()
-        self.assertEqual(len(finished_task_list), 2)
-        # sorted by finished_date
-        self.assertEqual(finished_task_list[0].id, member_list[3].id)
-        self.assertEqual(finished_task_list[1].id, member_list[4].id)
 
     def test_get_finished_task_list(self):
         gitlab_group = models.GitlabGroup.objects.create()

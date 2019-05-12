@@ -46,6 +46,9 @@ class TaskGroupCreateMethods:
             **kwargs
         )
 
+    def create_parent_task(self, **kwargs):
+        return TaskCreateMethods().create_task(**kwargs)
+
 
 class TaskCreateMethods(TaskGroupCreateMethods):
     def create_task(self, owner=None, task_group=None, **kwargs):
@@ -54,6 +57,3 @@ class TaskCreateMethods(TaskGroupCreateMethods):
             task_group=task_group,
             **kwargs
         )
-
-    def create_parent_task(self, **kwargs):
-        return self.create_task(**kwargs)

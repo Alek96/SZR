@@ -1,0 +1,61 @@
+{% extends 'sidebar.html' %}
+{% load staticfiles %}
+
+{% block title %}Groups{% endblock %}
+{% block project_active %}active{% endblock %}
+
+
+{% block head %}
+    {{ block.super }}
+    <script src="{% static 'projects/javascripts/tasks.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/projects_detail_index.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/project_list.css' %}"/>
+    <link rel="stylesheet" type="text/css" href="{% static 'projects/stylesheets/tasks.css' %}"/>
+{% endblock %}
+
+{% block sidebar-menu %}
+    {{ block.super }}
+{% endblock %}
+
+{% block page-content-body %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Tasks</h1>
+            </div>
+            <div class="col">
+                <div class="row buttons-new float-right display-inline">
+                    <div class="button-new-group" onclick="showList()">
+                        <a href="#" class="badge badge-success float-right">Add Task</a>
+                    </div>
+                    <div class="display-none" id="resolvedOptions">
+                        <ul>
+                            {% for name, link in new_project_links %}
+                                <li>
+                                    <a href="{{ link }}" class="badge badge-light">{{ name }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {% include 'projects/unfinished_task_list.html' %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Finished Tasks</h1>
+            </div>
+        </div>
+    </div>
+
+    {% include 'projects/finished_task_list.html' %}
+
+{% endblock %}
+

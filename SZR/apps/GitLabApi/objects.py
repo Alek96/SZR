@@ -176,3 +176,12 @@ class Project(mixins.ObjectSaveMixin, mixins.ObjectDeleteMixin, VisibilityLevel)
 
 class ProjectManager(mixins.CRUDMixin):
     _obj_cls = Project
+
+    def get_roots(self):
+        def _sort_by_full_name(project):
+            return project.path_with_namespace
+
+        project_list = self.list()
+        project_list.sort(key=_sort_by_full_name)
+
+        return project_list

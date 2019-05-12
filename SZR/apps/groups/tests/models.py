@@ -20,6 +20,9 @@ class TaskGroupMethods(core_test_models.TaskGroupCreateMethods):
             **kwargs
         )
 
+    def create_parent_task(self, **kwargs):
+        return AddSubgroupCreateMethods().create_task(**kwargs)
+
 
 class AbstractTaskCreateMethods(TaskGroupMethods, core_test_models.TaskCreateMethods):
     def create_task(self, owner=None, task_group=None, parent_task=None, gitlab_group=None, **kwargs):
@@ -30,9 +33,6 @@ class AbstractTaskCreateMethods(TaskGroupMethods, core_test_models.TaskCreateMet
             parent_task=parent_task,
             **kwargs
         )
-
-    def create_parent_task(self, **kwargs):
-        return AddSubgroupCreateMethods().create_task(**kwargs)
 
 
 class AddSubgroupCreateMethods(TaskGroupMethods, core_test_models.TaskCreateMethods):
@@ -47,9 +47,6 @@ class AddSubgroupCreateMethods(TaskGroupMethods, core_test_models.TaskCreateMeth
             path=path,
             **kwargs
         )
-
-    def create_parent_task(self, **kwargs):
-        return AddSubgroupCreateMethods().create_task(**kwargs)
 
 
 class AddProjectCreateMethods(AbstractTaskCreateMethods):

@@ -14,6 +14,8 @@
                     <div class="col-sm-6 font-weight-bold">
                         {% if task|name == 'AddSubgroup' %}
                             <a href="{% url 'groups:detail' task.new_gitlab_group.id %}">{{ task.get_name }} </a>
+                        {% elif task|name == 'AddProject' %}
+                            <a href="{% url 'projects:detail' task.new_gitlab_project.id %}">{{ task.get_name }} </a>
                         {% else %}
                             {{ task.get_name }}
                         {% endif %}
@@ -29,7 +31,7 @@
             </div>
             {% if task|name == 'TaskGroup' %}
                 <ul class="group-list-tree">
-                    {% include 'groups/ajax/load_finished_task_list.html' with finished_task_list=task.task_set %}
+                    {% include 'projects/ajax/load_finished_task_list.html' with finished_task_list=task.task_set %}
                 </ul>
             {% endif %}
         </li>
