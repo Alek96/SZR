@@ -5,7 +5,7 @@
         </div>
     {% endfor %}
 {% endif %}
-{% for field in form %}
+{% for field in form.visible_fields %}
     <div class="form-group d-block mx-auto">
         <div class="offset-sm-2 col-sm-10">
             <span class="text-danger small">{{ field.errors }}</span>
