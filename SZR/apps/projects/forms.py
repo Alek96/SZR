@@ -1,4 +1,8 @@
 from core import forms
+# from core.exceptions import FormNotValidError
+# from core.models import GitlabUser
+# from django import forms as django_forms
+# from django.utils.translation import gettext_lazy as _
 from groups.forms import BaseTaskForm as groups_BaseTaskForm
 
 from . import models
@@ -6,23 +10,29 @@ from . import tasks
 
 
 class AddProjectForm(groups_BaseTaskForm):
-    # ONE = 'One'
-    # ONE_FOR_ALL_USER = 'one_for_all_users'
-    # PER_USER = 'per_user'
+    # ONE = 'one'
+    # ONE_FOR_ALL_USER = 'for_all'
+    # # PER_USER = 'per_user'
     # HOW_MANY_CHOICES = (
     #     (ONE, _('One')),
     #     (ONE_FOR_ALL_USER, _('One for all users')),
-    #     (PER_USER, _('One per user')),
+    #     # (PER_USER, _('One per user')),
     # )
     #
     # how_many = django_forms.ChoiceField(choices=HOW_MANY_CHOICES, initial=ONE)
 
     class Meta(forms.BaseTaskForm.Meta):
         model = models.AddProject
-        fields = ['name', 'path', 'description', 'visibility'] + forms.BaseTaskForm.Meta.fields
+        fields = ['name', 'path', 'description', 'visibility', 'create_type',
+                  'import_url'] + forms.BaseTaskForm.Meta.fields
 
     def _save_in_gitlab(self, data, user_id, group_id=None, **kwargs):
         super()._save_in_gitlab(data=data, user_id=user_id, group_id=group_id, **kwargs)
+
+        # if data['how_many'] != self.ONE:
+        #     self.add_error('how_many', 'Must be set to "One"')
+        #     raise FormNotValidError(self.errors.as_data())
+
         tasks.create_project(
             user_id=user_id,
             group_id=group_id,
@@ -30,7 +40,7 @@ class AddProjectForm(groups_BaseTaskForm):
             path=data['path'],
             description=data['description'],
             visibility=data['visibility'],
-            # import_url=data['import_url'],
+            import_url=data['import_url'],
             **kwargs)
 
 

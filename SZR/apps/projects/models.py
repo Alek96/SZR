@@ -104,12 +104,11 @@ class AddProject(group_models.AbstractTask, core_models.AbstractVisibilityLevel)
     def clean(self):
         super().clean()
 
-        # if self.create_type != self.BLANK:
-        #     if not self.import_url:
-        #         raise ValidationError(
-        #             {'import_url': _('Import_url must be specified')})
-        # else:
-        #     self.import_url = ''
+        if self.create_type != self.BLANK and not self.import_url:
+            raise ValidationError(
+                {'import_url': _('Import_url must be specified')})
+        else:
+            self.import_url = None
 
     def _pre_save(self, *args, **kwargs):
         super()._pre_save(*args, **kwargs)

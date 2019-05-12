@@ -17,8 +17,8 @@ class AddProjectFormTests(groups_BaseTaskFormTest):
     valid_form_data = {
         'name': "Group_name",
         'path': "Group_path",
-        # 'create_type': models.AddProject.BLANK,
-        # 'import_url': '',
+        'create_type': models.AddProject.BLANK,
+        'import_url': None,
         'description': "Description",
         'visibility': models.AddProject.PRIVATE,
     }

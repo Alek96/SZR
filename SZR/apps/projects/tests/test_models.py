@@ -122,6 +122,14 @@ class AddProjectTests(AddProjectCreateMethods, core_test_models.AbstractTaskTest
         task = self.create_task()
         self.assertEqual(task.delete_url, '#')
 
+    def test_set_create_type_to_not_blank_without_import_url_raise_error(self):
+        with self.assertRaises(ValidationError):
+            self.create_task(create_type=models.AddProject.FORK)
+
+    def test_set_create_type_to_blank_set_import_url_to_None(self):
+        task = self.create_task(create_type=models.AddProject.BLANK, import_url='http://example.com')
+        self.assertEqual(task.import_url, None)
+
 
 class TaskGroupTests(AbstractTaskCreateMethods, core_test_models.AbstractTaskGroupTests):
     def test_creating_with_gitlab_project_and_parent_task_raise_error(self):

@@ -413,7 +413,12 @@ class NewProjectPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
 
     @LoginMethods.login_wrapper
     def test_page_post_valid_data(self):
-        response = self.client.post(self.get_url(), AddProjectFormTests.valid_form_data)
+        data = dict(AddProjectFormTests.valid_form_data)
+        for key, value in data.items():
+            if value is None:
+                data[key] = ''
+                
+        response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('groups:detail', kwargs=self.args))
 
@@ -449,7 +454,12 @@ class NewProjectTaskPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         self.assertTemplateUsed(response, 'groups/form_base_site.html')
 
     def _test_page_post_valid_data(self):
-        response = self.client.post(self.get_url(), AddProjectFormTests.valid_form_data)
+        data = dict(AddProjectFormTests.valid_form_data)
+        for key, value in data.items():
+            if value is None:
+                data[key] = ''
+
+        response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 302)
 
         model = AddProject.objects.get(task_group=self.task_group)
