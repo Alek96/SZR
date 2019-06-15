@@ -186,7 +186,7 @@ class BaseTaskFormTest(BaseFormTest):
         'name': "My Name",
     }
     mandatory_fields = []
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     def create_model(self, **kwargs):
         return self.model_methods.create_task(**kwargs)

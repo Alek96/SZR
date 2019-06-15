@@ -1,26 +1,16 @@
+from GitLabApi import GitLabApi
 from core import forms
-# from core.exceptions import FormNotValidError
-# from core.models import GitlabUser
-# from django import forms as django_forms
-# from django.utils.translation import gettext_lazy as _
-from groups.forms import BaseTaskForm as groups_BaseTaskForm
+from core.exceptions import FormNotValidError
+from core.models import GitlabUser
+from django import forms as django_forms
+from django.utils.translation import gettext_lazy as _
+from groups import forms as groups_forms
 
 from . import models
 from . import tasks
 
 
-class AddProjectForm(groups_BaseTaskForm):
-    # ONE = 'one'
-    # ONE_FOR_ALL_USER = 'for_all'
-    # # PER_USER = 'per_user'
-    # HOW_MANY_CHOICES = (
-    #     (ONE, _('One')),
-    #     (ONE_FOR_ALL_USER, _('One for all users')),
-    #     # (PER_USER, _('One per user')),
-    # )
-    #
-    # how_many = django_forms.ChoiceField(choices=HOW_MANY_CHOICES, initial=ONE)
-
+class AddProjectForm(groups_forms.BaseTaskForm):
     class Meta(forms.BaseTaskForm.Meta):
         model = models.AddProject
         fields = ['name', 'path', 'description', 'visibility', 'create_type',
@@ -28,10 +18,6 @@ class AddProjectForm(groups_BaseTaskForm):
 
     def _save_in_gitlab(self, data, user_id, group_id=None, **kwargs):
         super()._save_in_gitlab(data=data, user_id=user_id, group_id=group_id, **kwargs)
-
-        # if data['how_many'] != self.ONE:
-        #     self.add_error('how_many', 'Must be set to "One"')
-        #     raise FormNotValidError(self.errors.as_data())
 
         tasks.create_project(
             user_id=user_id,
@@ -42,6 +28,50 @@ class AddProjectForm(groups_BaseTaskForm):
             visibility=data['visibility'],
             import_url=data['import_url'],
             **kwargs)
+
+
+class AddMultipleProjectForm(groups_forms.TaskGroupForm):
+    SUFFIX_NUMBER = 'number'
+    SUFFIX_CHOICES = (
+        (SUFFIX_NUMBER, _('Number')),
+    )
+
+    suffix = django_forms.ChoiceField(choices=SUFFIX_CHOICES, initial=SUFFIX_NUMBER)
+
+    access_level = django_forms.TypedChoiceField(coerce=int, empty_value=None,
+                                                 choices=models.AddMember.ACCESS_LEVEL_CHOICES,
+                                                 initial=models.AddMember.ACCESS_GUEST)
+
+    def _post_save(self, model, user_id, project_form, **kwargs):
+        try:
+            owner = GitlabUser.objects.get(user_id=user_id)
+            members = GitLabApi(user_id).groups.get(model.gitlab_group.gitlab_id).members.all()
+            members = GitLabApi(user_id).groups.get(model.gitlab_group.gitlab_id)
+            suffix = 0
+            for member in members:
+                project = models.AddProject.objects.create(
+                    owner=owner,
+                    task_group=model,
+                    name=project_form.data['name'] + '_' + str(suffix),
+                    path=project_form.data['path'] + '_' + str(suffix),
+                    description=project_form.data['description'],
+                    visibility=project_form.data['visibility'],
+                    create_type=project_form.data['create_type'],
+                    import_url=project_form.data['import_url']
+                )
+
+                models.AddMember.objects.create(
+                    owner=owner,
+                    parent_task=project,
+                    username=member.username,
+                    access_level=self.data['access_level']
+                )
+
+                suffix += 1
+        except Exception as err:
+            self.add_error(None, str(err))
+            model.delete()
+            raise FormNotValidError(self.errors.as_data())
 
 
 class TaskGroupForm(forms.BaseTaskGroupForm):

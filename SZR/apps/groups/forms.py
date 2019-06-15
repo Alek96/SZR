@@ -81,7 +81,7 @@ class MembersFromFileForm(TaskGroupForm):
             self.add_error('file', str(err))
             raise FormNotValidError(self.errors.as_data())
 
-    def _post_save(self, model=None, user_id=None, **kwargs):
+    def _post_save(self, model, user_id, **kwargs):
         try:
             owner = GitlabUser.objects.get(user_id=user_id)
             for member_data in self.file_data:
@@ -113,7 +113,7 @@ class SubgroupAndMembersFromFileForm(TaskGroupForm):
             self.add_error('file', str(err))
             raise FormNotValidError(self.errors.as_data())
 
-    def _post_save(self, model=None, user_id=None, **kwargs):
+    def _post_save(self, model, user_id, **kwargs):
         try:
             owner = GitlabUser.objects.get(user_id=user_id)
             subgroups = self.create_subgroups(model, owner)

@@ -36,6 +36,11 @@
                               method="post" style="display: block;" enctype="multipart/form-data">
                             {% csrf_token %}
                             {% include 'core/form_base.html' %}
+                            {% if secound_form %}
+                                <hr>
+                                <hr>
+                                {% include 'core/form_base.html' with form=secound_form %}
+                            {% endif %}
 
                             <div class="form-group">
                                 <div class="row">

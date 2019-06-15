@@ -20,6 +20,8 @@ urlpatterns = [
     path('<int:group_id>/tasks/task_group/new/', views.new_task_group, name='new_task_group'),
     path('<int:group_id>/tasks/add_subgroup/new/', views.new_subgroup_task, name='new_subgroup_task'),
     path('<int:group_id>/tasks/add_project/new/', views.new_project_task, name='new_project_task'),
+    path('<int:group_id>/tasks/new_multiple_project_task/new/', views.new_multiple_project_task,
+         name='new_multiple_project_task'),
     path('<int:group_id>/tasks/add_member/new/', views.new_member_task, name='new_member_task'),
     path('<int:group_id>/tasks/add_member/new_members_from_file/', views.new_members_from_file,
          name='new_members_from_file'),

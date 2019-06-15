@@ -126,11 +126,17 @@ class BaseTaskGroupForm(BaseForm):
 
 
 class BaseTaskForm(BaseForm):
-    _readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    _readonly_fields = ['status', 'error_msg', 'finished_date']
 
     class Meta:
         model = models.AbstractTask
         fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+        widgets = {
+            'execute_date': widgets.AdminSplitDateTime,
+        }
+        field_classes = {
+            'execute_date': forms.SplitDateTimeField,
+        }
 
     def save_in_gitlab(self, user_id, **kwargs):
         if not self.is_valid():

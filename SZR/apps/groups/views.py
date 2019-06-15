@@ -9,7 +9,7 @@ from django.urls import reverse
 from groups import forms
 from groups import models
 from groups.sidebar import GroupSidebar, FutureGroupSidebar
-from projects.forms import AddProjectForm
+from projects.forms import AddProjectForm, AddMultipleProjectForm
 from projects.models import AddProject
 
 
@@ -223,6 +223,26 @@ def edit_project_task(request, task_id):
     }
     try:
         model = form.update()
+    except FormNotValidError:
+        return render(request, 'groups/form_base_site.html', context)
+    else:
+        return HttpResponseRedirect(model.tasks_page_url)
+
+
+@login_required
+def new_multiple_project_task(request, group_id=None, task_id=None):
+    parent_task = get_object_or_404(models.AddSubgroup, id=task_id) if task_id else None
+    project_form = AddProjectForm(request.POST or None)
+    group_form = AddMultipleProjectForm(request.POST or None)
+    context = {
+        "form": group_form,
+        "secound_form": project_form,
+        "page_title": 'Add Multiple Project - project per member',
+        "fields_title": 'Add Multiple Project - project per member',
+    }
+    try:
+        model = group_form.save(user_id=request.user.id, group_id=group_id, parent_task=parent_task,
+                                project_form=project_form)
     except FormNotValidError:
         return render(request, 'groups/form_base_site.html', context)
     else:

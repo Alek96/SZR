@@ -56,7 +56,7 @@ class BaseTaskFormTest(test_forms.BaseTaskFormTest):
         'name': "My Name",
     }
     mandatory_fields = []
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     @LoginMethods.create_user_wrapper
     def test_save(self):
@@ -98,7 +98,7 @@ class AddSubgroupFormTests(BaseTaskFormTest):
         'visibility': models.AddSubgroup.PRIVATE,
     }
     mandatory_fields = ['name', 'path']
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     @LoginMethods.create_user_wrapper
     @mock_all_gitlab_url
@@ -116,7 +116,7 @@ class AddMemberFormTests(BaseTaskFormTest):
         'access_level': models.AddMember.ACCESS_GUEST,
     }
     mandatory_fields = ['username']
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     @LoginMethods.create_user_wrapper
     @mock_all_gitlab_url

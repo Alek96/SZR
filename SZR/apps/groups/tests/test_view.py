@@ -417,7 +417,7 @@ class NewProjectPageTest(GitlabWrapperAppNameCase.GitlabWrapperAppNameTest):
         for key, value in data.items():
             if value is None:
                 data[key] = ''
-                
+
         response = self.client.post(self.get_url(), data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('groups:detail', kwargs=self.args))

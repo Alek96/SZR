@@ -181,3 +181,14 @@ update/dev: setup/dev refresh/dev
 restart_celery:
 	sudo supervisorctl restart szr_celery
 	sudo supervisorctl restart szr_celerybeat
+
+stop_gitlab:
+	sudo gitlab-ctl stop
+	sudo supervisorctl stop szr_celery
+	sudo supervisorctl stop szr_celerybeat
+
+start_gitla:
+	sudo gitlab-ctl start
+	sudo supervisorctl start szr_celery
+	sudo supervisorctl start szr_celerybeat
+

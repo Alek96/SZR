@@ -1,3 +1,5 @@
+from unittest import mock
+
 from GitLabApi import mock_all_gitlab_url
 from core.tests import test_forms
 from core.tests.test_view import LoginMethods
@@ -8,6 +10,7 @@ from projects import models
 from projects.tests import models as test_models
 from projects.tests.forms import FakeTaskForm
 from projects.tests.models import FakeTask
+from groups.tests.models import TaskGroupMethods
 
 
 class AddProjectFormTests(groups_BaseTaskFormTest):
@@ -23,13 +26,68 @@ class AddProjectFormTests(groups_BaseTaskFormTest):
         'visibility': models.AddProject.PRIVATE,
     }
     mandatory_fields = ['name', 'path']
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     @LoginMethods.create_user_wrapper
     @mock_all_gitlab_url
     def test_save_in_gitlab(self):
         form = forms.AddProjectForm(self.valid_form_data)
         form.save_in_gitlab(user_id=self.user.id, group_id=1)
+
+
+class AddMultipleProjectFormTests(test_forms.BaseTaskGroupFormTest):
+    form_class = forms.AddMultipleProjectForm
+    model_class = models.group_models.TaskGroup
+    model_methods = TaskGroupMethods()
+    valid_form_data = {
+        'name': "My Name",
+        'suffix': forms.AddMultipleProjectForm.SUFFIX_NUMBER,
+        'access_level': models.AddMember.ACCESS_GUEST,
+    }
+    mandatory_fields = ['name', 'access_level', 'suffix']
+    readonly_fields = ['status', 'finished_date', 'tasks_number', 'finished_tasks_number']
+
+    def setUp(self):
+        super().setUp()
+        self.project_form = forms.AddProjectForm(self.valid_form_data)
+
+    def _check_task_group(self, task_group):
+        self.assertTrue(task_group.task_set)
+
+        for project in task_group.task_set:
+            self.assertIsInstance(project, models.AddProject)
+            self.assertEqual(len(project.child_task_set), 1)
+            self.assertIsInstance(project.child_task_set[0], models.AddMember)
+
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_save_with_group_id(self):
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
+        task_group = form.save(group_id=1, user_id=self.user.id, project_form=self.project_form)
+
+        self.assertEqual(task_group.gitlab_group_id, 1)
+        self._check_task_group(task_group)
+
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_save_with_parent_task(self):
+        parent_task = self.model_methods.create_parent_task()
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
+        task_group = form.save(parent_task=parent_task, user_id=self.user.id, project_form=self.project_form)
+
+        self.assertEqual(task_group.parent_task.id, parent_task.id)
+        self._check_task_group(task_group)
+
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_save_raise_FormNotValidError_if_creating_members_raise_error(self):
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
+        with self.assertRaises(forms.FormNotValidError):
+            with mock.patch.object(forms.models.AddMember.objects, 'create', side_effect=Exception("Error msg")):
+                form.save(group_id=1, user_id=self.user.id, project_form=self.project_form)
+
+        with self.assertRaises(self.model_class.DoesNotExist):
+            self.model_class.objects.get(id=1)
 
 
 class TaskGroupFormTests(test_forms.BaseTaskGroupFormTest):
@@ -75,7 +133,7 @@ class BaseTaskFormTest(test_forms.BaseTaskFormTest):
         'name': "My Name",
     }
     mandatory_fields = []
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     @LoginMethods.create_user_wrapper
     def test_save(self):
@@ -115,7 +173,7 @@ class AddMemberFormTests(BaseTaskFormTest):
         'access_level': models.AddMember.ACCESS_GUEST,
     }
     mandatory_fields = ['username']
-    readonly_fields = ['status', 'error_msg', 'execute_date', 'finished_date']
+    readonly_fields = ['status', 'error_msg', 'finished_date']
 
     @LoginMethods.create_user_wrapper
     @mock_all_gitlab_url
