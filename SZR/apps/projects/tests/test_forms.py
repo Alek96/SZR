@@ -1,4 +1,5 @@
 from unittest import mock
+import unittest
 
 from GitLabApi import mock_all_gitlab_url
 from core.tests import test_forms
@@ -49,7 +50,7 @@ class AddMultipleProjectFormTests(test_forms.BaseTaskGroupFormTest):
 
     def setUp(self):
         super().setUp()
-        self.project_form = forms.AddProjectForm(self.valid_form_data)
+        self.project_form = forms.AddProjectForm(AddProjectFormTests.valid_form_data)
 
     def _check_task_group(self, task_group):
         self.assertTrue(task_group.task_set)
@@ -58,6 +59,13 @@ class AddMultipleProjectFormTests(test_forms.BaseTaskGroupFormTest):
             self.assertIsInstance(project, models.AddProject)
             self.assertEqual(len(project.child_task_set), 1)
             self.assertIsInstance(project.child_task_set[0], models.AddMember)
+
+    @LoginMethods.create_user_wrapper
+    @mock_all_gitlab_url
+    def test_save(self):
+        form = self.form_class(self.valid_form_data, self.valid_file_data)
+        with self.assertRaises(ValueError):
+            form.save()
 
     @LoginMethods.create_user_wrapper
     @mock_all_gitlab_url
@@ -76,7 +84,8 @@ class AddMultipleProjectFormTests(test_forms.BaseTaskGroupFormTest):
         task_group = form.save(parent_task=parent_task, user_id=self.user.id, project_form=self.project_form)
 
         self.assertEqual(task_group.parent_task.id, parent_task.id)
-        self._check_task_group(task_group)
+        self.assertFalse(task_group.task_set)
+        # self._check_task_group(task_group)
 
     @LoginMethods.create_user_wrapper
     @mock_all_gitlab_url
@@ -88,6 +97,10 @@ class AddMultipleProjectFormTests(test_forms.BaseTaskGroupFormTest):
 
         with self.assertRaises(self.model_class.DoesNotExist):
             self.model_class.objects.get(id=1)
+
+    @unittest.skip
+    def test_if_status_is_finished_disable_all_fields(self):
+        pass
 
 
 class TaskGroupFormTests(test_forms.BaseTaskGroupFormTest):

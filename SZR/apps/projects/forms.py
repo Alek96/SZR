@@ -43,10 +43,14 @@ class AddMultipleProjectForm(groups_forms.TaskGroupForm):
                                                  initial=models.AddMember.ACCESS_GUEST)
 
     def _post_save(self, model, user_id, project_form, **kwargs):
+
+        if model.gitlab_group.gitlab_id is None:
+            return
+
         try:
             owner = GitlabUser.objects.get(user_id=user_id)
             members = GitLabApi(user_id).groups.get(model.gitlab_group.gitlab_id).members.all()
-            members = GitLabApi(user_id).groups.get(model.gitlab_group.gitlab_id)
+            # members = GitLabApi(user_id).groups.get(model.gitlab_group.gitlab_id)
             suffix = 0
             for member in members:
                 project = models.AddProject.objects.create(
