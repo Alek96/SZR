@@ -38,14 +38,14 @@
             {#            </form>#}
             <ul class="navbar-nav my-sm-0">
                 {% if user.is_authenticated %}
-                <li class="nav-item disabled {% block message_active %}{% endblock %}">
-                    <a class="nav-link" href="#">
-                        <i class="fa fa-envelope">
-                            <span class="badge badge-danger">11</span>
-                        </i>
-                        Messages
-                    </a>
-                </li>
+{#                <li class="nav-item disabled {% block message_active %}{% endblock %}">#}
+{#                    <a class="nav-link" href="#">#}
+{#                        <i class="fa fa-envelope">#}
+{#                            <span class="badge badge-danger">11</span>#}
+{#                        </i>#}
+{#                        Messages#}
+{#                    </a>#}
+{#                </li>#}
 
                 {% if user.is_superuser %}
                 <li class="nav-item">
